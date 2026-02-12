@@ -12,6 +12,8 @@ router.post("/submit", authMiddleware, async (req, res: Response) => {
     solution?: string;
   };
 
+  console.log(`Submission attempt: user=${username}, problemId=${problemId}`);
+
   if (!problemId || !solution) {
     return res
       .status(400)
@@ -19,11 +21,13 @@ router.post("/submit", authMiddleware, async (req, res: Response) => {
   }
 
   try {
-    const user = await prisma.user.create({
-      data: {
-        username,
-      },
+    const user = await prisma.user.upsert({
+      where: { username },
+      update: {},
+      create: { username },
     });
+
+    console.log(`User resolved: id=${user.id}`);
 
     const submission = await prisma.submission.create({
       data: {
@@ -33,9 +37,12 @@ router.post("/submit", authMiddleware, async (req, res: Response) => {
       },
     });
 
+    console.log(`Submission created: id=${submission.id}`);
     res.json({ message: "Submission successful", submission });
   } catch (error) {
-    res.status(500).json({ error: "Failed to store submission" });
+    console.error("Submission error details:", error);
+    const errorMessage = error instanceof Error ? error.message : "Failed to store submission";
+    res.status(500).json({ error: errorMessage });
   }
 });
 

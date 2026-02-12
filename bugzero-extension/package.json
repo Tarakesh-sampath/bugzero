@@ -3,27 +3,53 @@
   "displayName": "bugzero-extension",
   "description": "",
   "version": "0.0.1",
+  "publisher": "bugzero",
   "engines": {
     "vscode": "^1.109.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onView:bugzero-sidebar"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "bugzero-sidebar-view",
+          "title": "BugZero",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "bugzero-sidebar-view": [
+        {
+          "type": "webview",
+          "id": "bugzero-sidebar",
+          "name": "BugZero Sidebar 2",
+          "visibility": "visible"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "bugzero-extension.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "bugzero-sidebar.focus",
+        "title": "Focus BugZero Sidebar"
       }
     ]
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
-    "compile": "webpack",
-    "watch": "webpack --watch",
-    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile": "webpack && vite build",
+    "watch": "concurrently \"webpack --watch\" \"vite build --watch\"",
+    "package": "webpack --mode production && vite build",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
@@ -31,16 +57,29 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.109.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
-    "typescript-eslint": "^8.54.0",
-    "eslint": "^9.39.2",
-    "typescript": "^5.9.3",
-    "ts-loader": "^9.5.4",
-    "webpack": "^5.104.1",
-    "webpack-cli": "^6.0.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/vhtml": "^2.2.9",
+    "@types/vscode": "^1.109.0",
+    "@vitejs/plugin-react": "^5.1.4",
     "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.5.2"
+    "@vscode/test-electron": "^2.5.2",
+    "concurrently": "^9.2.1",
+    "css-loader": "^7.1.3",
+    "eslint": "^9.39.2",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.4",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.54.0",
+    "vite": "^7.3.1",
+    "webpack": "^5.104.1",
+    "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "vhtml": "^2.2.0"
   }
 }
