@@ -16,7 +16,9 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
   }
 
   const decoded = Buffer.from(credentials, 'base64').toString('utf-8');
-  const [username, password] = decoded.split(':');
+  const parts = decoded.split(':');
+  const username = parts[0];
+  const password = parts.slice(1).join(':');
 
   const SHARED_PASSWORD = process.env.SHARED_PASSWORD;
 

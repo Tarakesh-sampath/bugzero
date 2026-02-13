@@ -3,7 +3,6 @@ import copy
 def update_config():
     original = {"id": 1, "settings": {"theme": "dark"}}
     
-    # Bug: .copy() is a shallow copy
     new_config = original.copy()
     new_config["settings"]["theme"] = "light"
     new_config["id"] = 2

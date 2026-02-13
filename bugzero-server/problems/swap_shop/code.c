@@ -14,7 +14,7 @@ void swap(int a, int b) {
 
 int main() {
     int x, y;
-    if (scanf("%d %d", x, y) != 2) return 0; 
+    if (scanf("%d %d", &x, &y) != 2) return 0; 
     
     swap(x, y);
     

@@ -11,7 +11,7 @@ def checkout():
     total = 0
     
     for i in range(items_count):
-        item_data = input().split() # Format: "Apple 10.50"
+        item_data = input().rsplit(' ', 1) 
         price = float(item_data[1])
         total += price
         

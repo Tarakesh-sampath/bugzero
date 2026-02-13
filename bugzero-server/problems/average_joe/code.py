@@ -8,7 +8,7 @@ def calculate_average():
     numbers = input().split()
     total = 0
     for num in numbers:
-        total += num
+        total += int(num)
     
     avg = total / len(numbers)
     print("Average is: " + avg)
