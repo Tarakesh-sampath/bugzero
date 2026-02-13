@@ -1,0 +1,11 @@
+{
+  "lang": "py",
+  "level": "medium",
+  "testcases": [
+    {
+      "input": "Alice Bob",
+      "output": "['Alice']
+['Bob']"
+    }
+  ]
+}

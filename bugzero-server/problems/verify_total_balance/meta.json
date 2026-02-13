@@ -1,0 +1,10 @@
+{
+  "lang": "py",
+  "level": "easy",
+  "testcases": [
+    {
+      "input": "",
+      "output": "Balance Verified"
+    }
+  ]
+}

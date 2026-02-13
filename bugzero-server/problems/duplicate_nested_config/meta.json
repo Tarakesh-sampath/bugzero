@@ -1,0 +1,11 @@
+{
+  "lang": "py",
+  "level": "hard",
+  "testcases": [
+    {
+      "input": "",
+      "output": "Original: dark
+New: light"
+    }
+  ]
+}

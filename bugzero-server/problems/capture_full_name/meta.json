@@ -1,0 +1,14 @@
+{
+  "lang": "c",
+  "level": "easy",
+  "testcases": [
+    {
+      "input": "Alice Smith",
+      "output": "Hello, Alice Smith"
+    },
+    {
+      "input": "Bob",
+      "output": "Hello, Bob"
+    }
+  ]
+}
