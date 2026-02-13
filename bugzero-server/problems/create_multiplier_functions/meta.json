@@ -1,0 +1,10 @@
+{
+  "lang": "py",
+  "level": "hard",
+  "testcases": [
+    {
+      "input": "10",
+      "output": "[0, 10, 20]"
+    }
+  ]
+}
