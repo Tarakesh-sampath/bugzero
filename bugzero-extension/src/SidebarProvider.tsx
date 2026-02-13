@@ -5,15 +5,19 @@ import * as path from "path";
 import * as fs from "fs";
 
 const execPromise = promisify(exec);
-const BASE_URL = "http://localhost:3000";
-
 export class SidebarProvider implements vscode.WebviewViewProvider {
   _view?: vscode.WebviewView;
+  private readonly _baseUrl: string;
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
-    private readonly _context: vscode.ExtensionContext
-  ) {}
+    private readonly _context: vscode.ExtensionContext,
+  ) {
+    this._baseUrl =
+      _context.extensionMode === vscode.ExtensionMode.Production
+        ? "https://bugzero.onrender.com"
+        : "http://localhost:3000";
+  }
 
   public resolveWebviewView(webviewView: vscode.WebviewView) {
     this._view = webviewView;
@@ -35,17 +39,20 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             fileName,
           });
         }
-      })
+      }),
     );
 
     webviewView.webview.onDidReceiveMessage(async (data) => {
       console.log("Message received in backend:", data.command);
       switch (data.command) {
         case "checkLogin": {
-          const savedAuth = this._context.globalState.get<{ auth: string, username: string }>("loginData");
+          const savedAuth = this._context.globalState.get<{
+            auth: string;
+            username: string;
+          }>("loginData");
           if (savedAuth) {
             try {
-              const response = await fetch(`${BASE_URL}/register`, {
+              const response = await fetch(`${this._baseUrl}/register`, {
                 method: "POST",
                 headers: {
                   Authorization: `Basic ${savedAuth.auth}`,
@@ -96,9 +103,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         }
         case "login": {
           const { username, password } = data.value;
-          const auth = Buffer.from(`${username}:${password}`).toString("base64");
+          const auth = Buffer.from(`${username}:${password}`).toString(
+            "base64",
+          );
           try {
-            const response = await fetch(`${BASE_URL}/register`, {
+            const response = await fetch(`${this._baseUrl}/register`, {
               method: "POST",
               headers: {
                 Authorization: `Basic ${auth}`,
@@ -110,7 +119,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
               const problems = result.problems || [];
 
               // Persist login
-              await this._context.globalState.update("loginData", { auth, username });
+              await this._context.globalState.update("loginData", {
+                auth,
+                username,
+              });
 
               // Sync problems (write missing ones)
               await this.syncProblems(problems);
@@ -152,7 +164,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           const result = await vscode.window.showInformationMessage(
             "Are you sure you want to log out?",
             "Yes",
-            "No"
+            "No",
           );
 
           if (result === "Yes") {
@@ -170,7 +182,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             return;
           }
 
-          const fileUri = vscode.Uri.joinPath(workspaceFolders[0].uri, fileName);
+          const fileUri = vscode.Uri.joinPath(
+            workspaceFolders[0].uri,
+            fileName,
+          );
           try {
             const document = await vscode.workspace.openTextDocument(fileUri);
             await vscode.window.showTextDocument(document);
@@ -196,9 +211,14 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             command = "python3";
             args = [filePath];
           } else if (isC) {
-            const outputExe = path.join(rootPath, `temp_out_${Date.now()}_${Math.floor(Math.random() * 1000)}`);
+            const outputExe = path.join(
+              rootPath,
+              `temp_out_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+            );
             try {
-              const { stderr: compileStderr } = await execPromise(`gcc "${filePath}" -o "${outputExe}"`);
+              const { stderr: compileStderr } = await execPromise(
+                `gcc "${filePath}" -o "${outputExe}"`,
+              );
               if (compileStderr) {
                 console.warn("Compile warning:", compileStderr);
               }
@@ -256,7 +276,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
               success,
               actualOutput,
               expectedOutput,
-              stderr: stderr || (code !== 0 ? `Process exited with code ${code}` : ""),
+              stderr:
+                stderr ||
+                (code !== 0 ? `Process exited with code ${code}` : ""),
             });
 
             // Clean up temp C executable
@@ -280,12 +302,15 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             return;
           }
 
-          const fileUri = vscode.Uri.joinPath(workspaceFolders[0].uri, fileName);
+          const fileUri = vscode.Uri.joinPath(
+            workspaceFolders[0].uri,
+            fileName,
+          );
           try {
             const contentBuffer = await vscode.workspace.fs.readFile(fileUri);
             const content = new TextDecoder().decode(contentBuffer);
 
-            const response = await fetch(`${BASE_URL}/submit`, {
+            const response = await fetch(`${this._baseUrl}/submit`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -299,14 +324,18 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
             const result = await response.json();
             if (response.ok) {
-              vscode.window.showInformationMessage(`Submitted ${fileName} successfully!`);
+              vscode.window.showInformationMessage(
+                `Submitted ${fileName} successfully!`,
+              );
               this._view?.webview.postMessage({
                 command: "submissionResponse",
                 success: true,
                 fileName,
               });
             } else {
-              vscode.window.showErrorMessage(`Submission failed: ${result.error}`);
+              vscode.window.showErrorMessage(
+                `Submission failed: ${result.error}`,
+              );
               this._view?.webview.postMessage({
                 command: "submissionResponse",
                 success: false,
@@ -324,8 +353,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   }
 
   public async pullProblems(showMessages = true) {
-    const savedAuth = this._context.globalState.get<{ auth: string, username: string }>("loginData");
-    
+    const savedAuth = this._context.globalState.get<{
+      auth: string;
+      username: string;
+    }>("loginData");
+
     // Always get local files
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders) {
@@ -339,7 +371,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         const entries = await vscode.workspace.fs.readDirectory(rootUri);
         return entries.map(([name, type]) => ({
           name,
-          type: type === vscode.FileType.Directory ? 'directory' : 'file'
+          type: type === vscode.FileType.Directory ? "directory" : "file",
         }));
       } catch (err) {
         console.error(err);
@@ -348,14 +380,15 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     };
 
     if (!savedAuth) {
-      if (showMessages) vscode.window.showErrorMessage("Please login first to pull problems.");
+      if (showMessages)
+        vscode.window.showErrorMessage("Please login first to pull problems.");
       const files = await getLocalFiles();
       this._view?.webview.postMessage({ command: "files", value: files });
       return;
     }
 
     try {
-      const response = await fetch(`${BASE_URL}/problems`, {
+      const response = await fetch(`${this._baseUrl}/problems`, {
         headers: {
           Authorization: `Basic ${savedAuth.auth}`,
         },
@@ -364,22 +397,28 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       if (response.ok) {
         const problems: any = await response.json();
         const syncedCount = await this.syncProblems(problems);
-        
+
         if (showMessages && syncedCount > 0) {
-          vscode.window.showInformationMessage(`Pulled problems. ${syncedCount} new files added.`);
+          vscode.window.showInformationMessage(
+            `Pulled problems. ${syncedCount} new files added.`,
+          );
         }
-        
+
         const files = await getLocalFiles();
         this._view?.webview.postMessage({ command: "files", value: files });
         this._view?.webview.postMessage({ command: "pullSuccess", problems });
       } else {
-        if (showMessages) vscode.window.showErrorMessage("Failed to pull problems from server.");
+        if (showMessages)
+          vscode.window.showErrorMessage(
+            "Failed to pull problems from server.",
+          );
         const files = await getLocalFiles();
         this._view?.webview.postMessage({ command: "files", value: files });
       }
     } catch (err) {
       console.error("Pull error:", err);
-      if (showMessages) vscode.window.showErrorMessage("Server connection failed during pull.");
+      if (showMessages)
+        vscode.window.showErrorMessage("Server connection failed during pull.");
       const files = await getLocalFiles();
       this._view?.webview.postMessage({ command: "files", value: files });
     }
@@ -395,7 +434,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     for (const problem of problems) {
       const fileName = `${problem.id}.${problem.lang}`;
       const fileUri = vscode.Uri.joinPath(rootUri, fileName);
-      
+
       try {
         // Check if file exists
         await vscode.workspace.fs.stat(fileUri);
@@ -412,7 +451,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
   private _getHtmlForWebview(webview: vscode.Webview) {
     const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, "dist", "webview", "home.js")
+      vscode.Uri.joinPath(this._extensionUri, "dist", "webview", "home.js"),
     );
 
     const nonce = getNonce();
@@ -435,9 +474,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
 function getNonce() {
   let text = "";
-  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const possible =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   for (let i = 0; i < 32; i++) {
     text += possible.charAt(Math.floor(Math.random() * possible.length));
   }
   return text;
 }
+

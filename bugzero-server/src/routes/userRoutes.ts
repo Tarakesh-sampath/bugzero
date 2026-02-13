@@ -27,6 +27,7 @@ router.post("/register", authMiddleware, async (req, res: Response) => {
     
     res.json({ message: "User processed", user, problems });
   } catch (error) {
+    console.error("Error in /register:", error);
     res.status(500).json({ error: "Failed to process user" });
   }
 });

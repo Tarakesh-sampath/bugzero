@@ -25,6 +25,7 @@ const Home = () => {
     const [problemsData, setProblemsData] = useState<Problem[]>([]);
     const [activeFile, setActiveFile] = useState<string | null>(null);
     const [runResults, setRunResults] = useState<Record<string, any>>({});
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
 
     // @ts-ignore
     const vscode = React.useMemo(() => acquireVsCodeApi(), []);
@@ -37,6 +38,7 @@ const Home = () => {
                     setFiles(message.value);
                     break;
                 case 'loginResponse':
+                    setIsLoggingIn(false);
                     if (message.success) {
                         setIsLoggedIn(true);
                         setAuth(message.auth);
@@ -95,8 +97,13 @@ const Home = () => {
     }, [vscode]);
 
     const handleLogin = () => {
+        if (!username || !password) {
+            setError('Please enter both username and password.');
+            return;
+        }
         console.log("Attempting login in webview for:", username);
         setError('');
+        setIsLoggingIn(true);
         vscode.postMessage({ command: 'login', value: { username, password } });
     };
 
@@ -137,6 +144,7 @@ const Home = () => {
                         type="text" 
                         placeholder="Username" 
                         value={username} 
+                        disabled={isLoggingIn}
                         onChange={e => setUsername(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleLogin()}
                         style={{ padding: '5px', background: 'var(--vscode-input-background)', color: 'var(--vscode-input-foreground)', border: '1px solid var(--vscode-input-border)' }}
@@ -145,11 +153,16 @@ const Home = () => {
                         type="password" 
                         placeholder="Password" 
                         value={password} 
+                        disabled={isLoggingIn}
                         onChange={e => setPassword(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleLogin()}
                         style={{ padding: '5px', background: 'var(--vscode-input-background)', color: 'var(--vscode-input-foreground)', border: '1px solid var(--vscode-input-border)' }}
                     />
-                    <Button label="Login" onClick={handleLogin} />
+                    <Button 
+                        label={isLoggingIn ? "Logging in..." : "Login"} 
+                        onClick={handleLogin} 
+                        disabled={isLoggingIn}
+                    />
                     {error && <p style={{ color: 'var(--vscode-errorForeground)' }}>{error}</p>}
                 </div>
             </div>
@@ -296,10 +309,6 @@ const Home = () => {
             )}
 
             {problems.length === 0 && <p style={{ marginTop: '10px', opacity: 0.7 }}>No .c or .py files found.</p>}
-            <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
-                <Button label="Refresh Files" onClick={() => vscode.postMessage({ command: 'getFiles' })} />
-                <Button label="Pull Missing" onClick={() => vscode.postMessage({ command: 'pull' })} />
-            </div>
         </div>
     );
 };

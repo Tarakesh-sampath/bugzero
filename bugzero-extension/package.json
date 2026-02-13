@@ -45,9 +45,29 @@
       },
       {
         "command": "bugzero-extension.pullProblems",
-        "title": "BugZero: Pull Missing Problems"
+        "title": "BugZero: Pull Missing Problems",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "bugzero-extension.refreshFiles",
+        "title": "BugZero: Refresh Files",
+        "icon": "$(refresh)"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "bugzero-extension.refreshFiles",
+          "when": "view == bugzero-sidebar",
+          "group": "navigation"
+        },
+        {
+          "command": "bugzero-extension.pullProblems",
+          "when": "view == bugzero-sidebar",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
