@@ -1,0 +1,14 @@
+{
+  "testcases": [
+    {
+      "input": "3\n10 20 30",
+      "output": "Average: 20.00"
+    },
+    {
+      "input": "2\n5 10",
+      "output": "Average: 7.50"
+    }
+  ],
+  "level": "easy",
+  "lang": "c"
+}

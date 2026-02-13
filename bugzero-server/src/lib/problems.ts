@@ -5,6 +5,7 @@ export interface Problem {
   id: string;
   lang: string;
   code: string;
+  level: string;
   testcases: { input: string; output: string }[];
 }
 
@@ -32,6 +33,7 @@ export async function getAllProblems(): Promise<Problem[]> {
             id: dir,
             lang,
             code,
+            level: meta.level || 'easy',
             testcases: meta.testcases || []
           });
         }

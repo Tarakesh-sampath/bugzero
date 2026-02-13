@@ -42,6 +42,10 @@
       {
         "command": "bugzero-sidebar.focus",
         "title": "Focus BugZero Sidebar"
+      },
+      {
+        "command": "bugzero-extension.pullProblems",
+        "title": "BugZero: Pull Missing Problems"
       }
     ]
   },

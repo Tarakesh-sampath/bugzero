@@ -10,6 +10,7 @@ interface Problem {
     id: string;
     lang: string;
     code: string;
+    level: string;
     testcases: { input: string; output: string }[];
 }
 
@@ -76,6 +77,11 @@ const Home = () => {
                         ...prev,
                         [message.expectedOutput]: message // Using expectedOutput as key is a bit hacky but works for simple cases
                     }));
+                    break;
+                case 'pullSuccess':
+                    if (message.problems) {
+                        setProblemsData(message.problems);
+                    }
                     break;
             }
         };
@@ -189,19 +195,24 @@ const Home = () => {
                         const problemId = file.name.split('.')[0];
                         const isSubmitted = submittedFiles.has(problemId);
                         const isActive = activeFile === file.name;
+                        const problemInfo = problemsData.find(p => p.id === problemId);
+                        
                         return (
                             <tr key={file.name} style={{ borderBottom: '1px solid var(--vscode-panel-border)', background: isActive ? 'var(--vscode-list-activeSelectionBackground)' : 'transparent' }}>
                                 <td style={{ padding: '5px', fontSize: '1.2em' }}>
                                     {isPython ? '🐍' : 'C'}
                                 </td>
                                 <td style={{ padding: '5px' }}>
-                                    <span 
-                                        onClick={() => handleOpenFile(file.name)}
-                                        style={{ cursor: 'pointer', color: isActive ? 'var(--vscode-list-activeSelectionForeground)' : 'var(--vscode-textLink-foreground)' }}
-                                        title="Click to open file"
-                                    >
-                                        {displayName}
-                                    </span>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        <span 
+                                            onClick={() => handleOpenFile(file.name)}
+                                            style={{ cursor: 'pointer', color: isActive ? 'var(--vscode-list-activeSelectionForeground)' : 'var(--vscode-textLink-foreground)' }}
+                                            title="Click to open file"
+                                        >
+                                            {displayName}
+                                        </span>
+                                        {problemInfo && <LevelChip level={problemInfo.level} />}
+                                    </div>
                                 </td>
                                 <td style={{ padding: '5px' }}>
                                     <ActionButton 
@@ -218,7 +229,10 @@ const Home = () => {
             {activeProblem && (
                 <div style={{ marginTop: '20px', borderTop: '1px solid var(--vscode-panel-border)', paddingTop: '10px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                        <h3 style={{ margin: 0 }}>Test Cases: {activeProblem.id}</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <h3 style={{ margin: 0 }}>Test Cases: {activeProblem.id}</h3>
+                            <LevelChip level={activeProblem.level} />
+                        </div>
                         <button 
                             onClick={() => handleRunAll(activeProblem)}
                             style={{ 
@@ -282,10 +296,33 @@ const Home = () => {
             )}
 
             {problems.length === 0 && <p style={{ marginTop: '10px', opacity: 0.7 }}>No .c or .py files found.</p>}
-            <div style={{ marginTop: '20px' }}>
+            <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
                 <Button label="Refresh Files" onClick={() => vscode.postMessage({ command: 'getFiles' })} />
+                <Button label="Pull Missing" onClick={() => vscode.postMessage({ command: 'pull' })} />
             </div>
         </div>
+    );
+};
+
+const LevelChip = ({ level }: { level: string }) => {
+    const colors: Record<string, string> = {
+        easy: '#4caf50',
+        medium: '#ff9800',
+        hard: '#f44336'
+    };
+
+    return (
+        <span style={{
+            fontSize: '0.7em',
+            padding: '1px 6px',
+            borderRadius: '10px',
+            backgroundColor: colors[level.toLowerCase()] || 'gray',
+            color: 'white',
+            width: 'fit-content',
+            textTransform: 'capitalize'
+        }}>
+            {level}
+        </span>
     );
 };
 

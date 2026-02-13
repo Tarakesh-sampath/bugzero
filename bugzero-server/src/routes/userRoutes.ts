@@ -31,4 +31,13 @@ router.post("/register", authMiddleware, async (req, res: Response) => {
   }
 });
 
+router.get("/problems", authMiddleware, async (req, res: Response) => {
+  try {
+    const problems = await getAllProblems();
+    res.json(problems);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch problems" });
+  }
+});
+
 export default router;

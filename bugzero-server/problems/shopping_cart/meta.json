@@ -1,0 +1,14 @@
+{
+  "testcases": [
+    {
+      "input": "2\nBread 2.50\nWine 120.00",
+      "output": "Total: 110"
+    },
+    {
+      "input": "1\nFuji Apple 10.50",
+      "output": "Total: 11"
+    }
+  ],
+  "level": "medium",
+  "lang": "py"
+}

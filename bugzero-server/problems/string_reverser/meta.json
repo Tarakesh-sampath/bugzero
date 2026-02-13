@@ -1,0 +1,14 @@
+{
+  "testcases": [
+    {
+      "input": "Hello",
+      "output": "olleH"
+    },
+    {
+      "input": "C",
+      "output": "C"
+    }
+  ],
+  "level": "easy",
+  "lang": "c"
+}

@@ -1,0 +1,14 @@
+{
+  "testcases": [
+    {
+      "input": "10 20",
+      "output": "20 10"
+    },
+    {
+      "input": "5 5",
+      "output": "5 5"
+    }
+  ],
+  "level": "medium",
+  "lang": "c"
+}

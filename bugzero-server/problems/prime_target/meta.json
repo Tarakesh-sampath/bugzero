@@ -1,0 +1,18 @@
+{
+  "testcases": [
+    {
+      "input": "1",
+      "output": "Not Prime"
+    },
+    {
+      "input": "4",
+      "output": "Not Prime"
+    },
+    {
+      "input": "2",
+      "output": "Prime"
+    }
+  ],
+  "level": "medium",
+  "lang": "py"
+}

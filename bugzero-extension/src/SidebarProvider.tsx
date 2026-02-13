@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { promisify } from "util";
 import * as path from "path";
+import * as fs from "fs";
 
 const execPromise = promisify(exec);
 const BASE_URL = "http://localhost:3000";
@@ -90,23 +91,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           break;
         }
         case "getFiles": {
-          const workspaceFolders = vscode.workspace.workspaceFolders;
-          if (!workspaceFolders) {
-            this._view?.webview.postMessage({ command: "files", value: [] });
-            return;
-          }
-
-          const rootUri = workspaceFolders[0].uri;
-          try {
-            const entries = await vscode.workspace.fs.readDirectory(rootUri);
-            const files = entries.map(([name, type]) => ({
-              name,
-              type: type === vscode.FileType.Directory ? 'directory' : 'file'
-            }));
-            this._view?.webview.postMessage({ command: "files", value: files });
-          } catch (err) {
-            console.error(err);
-          }
+          await this.pullProblems(false);
           break;
         }
         case "login": {
@@ -127,21 +112,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
               // Persist login
               await this._context.globalState.update("loginData", { auth, username });
 
-              // Create files for problems
-              const workspaceFolders = vscode.workspace.workspaceFolders;
-              if (workspaceFolders) {
-                const rootUri = workspaceFolders[0].uri;
-                for (const problem of problems) {
-                  const fileName = `${problem.id}.${problem.lang}`;
-                  const fileUri = vscode.Uri.joinPath(rootUri, fileName);
-                  const content = Buffer.from(problem.code, "utf8");
-                  try {
-                    await vscode.workspace.fs.writeFile(fileUri, content);
-                  } catch (err) {
-                    console.error(`Error writing file ${fileName}:`, err);
-                  }
-                }
-              }
+              // Sync problems (write missing ones)
+              await this.syncProblems(problems);
 
               this._view?.webview.postMessage({
                 command: "loginResponse",
@@ -151,6 +123,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 user: result.user,
                 problems: problems, // Send problems to webview for testcases
               });
+
+              // Also refresh file list
+              await this.pullProblems(false);
             } else {
               const errorData = await response.json().catch(() => ({}));
               this._view?.webview.postMessage({
@@ -169,6 +144,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           }
           break;
         }
+        case "pull": {
+          await this.pullProblems(true);
+          break;
+        }
         case "logout": {
           const result = await vscode.window.showInformationMessage(
             "Are you sure you want to log out?",
@@ -179,6 +158,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           if (result === "Yes") {
             await this._context.globalState.update("loginData", undefined);
             this._view?.webview.postMessage({ command: "logoutSuccess" });
+            // Refresh files after logout to show local state
+            await this.pullProblems(false);
           }
           break;
         }
@@ -215,7 +196,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             command = "python3";
             args = [filePath];
           } else if (isC) {
-            const outputExe = path.join(rootPath, "temp_out");
+            const outputExe = path.join(rootPath, `temp_out_${Date.now()}_${Math.floor(Math.random() * 1000)}`);
             try {
               const { stderr: compileStderr } = await execPromise(`gcc "${filePath}" -o "${outputExe}"`);
               if (compileStderr) {
@@ -237,11 +218,23 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
           if (!command) return;
 
-          const { spawn } = require("child_process");
           const child = spawn(command, args, { cwd: rootPath });
 
           let stdout = "";
           let stderr = "";
+          let killed = false;
+
+          const timeout = setTimeout(() => {
+            child.kill();
+            killed = true;
+            this._view?.webview.postMessage({
+              command: "runResult",
+              success: false,
+              actualOutput: "",
+              expectedOutput,
+              stderr: "Time Limit Exceeded (5s)",
+            });
+          }, 5000);
 
           child.stdout.on("data", (data: Buffer) => {
             stdout += data.toString();
@@ -252,6 +245,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           });
 
           child.on("close", (code: number) => {
+            clearTimeout(timeout);
+            if (killed) return;
+
             const actualOutput = stdout.trim();
             const success = actualOutput === expectedOutput.trim();
 
@@ -262,6 +258,13 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
               expectedOutput,
               stderr: stderr || (code !== 0 ? `Process exited with code ${code}` : ""),
             });
+
+            // Clean up temp C executable
+            if (isC && command.startsWith(rootPath)) {
+              fs.unlink(command, (err) => {
+                if (err) console.error("Error deleting temp exe:", err);
+              });
+            }
           });
 
           if (input) {
@@ -318,6 +321,93 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         }
       }
     });
+  }
+
+  public async pullProblems(showMessages = true) {
+    const savedAuth = this._context.globalState.get<{ auth: string, username: string }>("loginData");
+    
+    // Always get local files
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) {
+      this._view?.webview.postMessage({ command: "files", value: [] });
+      return;
+    }
+
+    const rootUri = workspaceFolders[0].uri;
+    const getLocalFiles = async () => {
+      try {
+        const entries = await vscode.workspace.fs.readDirectory(rootUri);
+        return entries.map(([name, type]) => ({
+          name,
+          type: type === vscode.FileType.Directory ? 'directory' : 'file'
+        }));
+      } catch (err) {
+        console.error(err);
+        return [];
+      }
+    };
+
+    if (!savedAuth) {
+      if (showMessages) vscode.window.showErrorMessage("Please login first to pull problems.");
+      const files = await getLocalFiles();
+      this._view?.webview.postMessage({ command: "files", value: files });
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BASE_URL}/problems`, {
+        headers: {
+          Authorization: `Basic ${savedAuth.auth}`,
+        },
+      });
+
+      if (response.ok) {
+        const problems: any = await response.json();
+        const syncedCount = await this.syncProblems(problems);
+        
+        if (showMessages && syncedCount > 0) {
+          vscode.window.showInformationMessage(`Pulled problems. ${syncedCount} new files added.`);
+        }
+        
+        const files = await getLocalFiles();
+        this._view?.webview.postMessage({ command: "files", value: files });
+        this._view?.webview.postMessage({ command: "pullSuccess", problems });
+      } else {
+        if (showMessages) vscode.window.showErrorMessage("Failed to pull problems from server.");
+        const files = await getLocalFiles();
+        this._view?.webview.postMessage({ command: "files", value: files });
+      }
+    } catch (err) {
+      console.error("Pull error:", err);
+      if (showMessages) vscode.window.showErrorMessage("Server connection failed during pull.");
+      const files = await getLocalFiles();
+      this._view?.webview.postMessage({ command: "files", value: files });
+    }
+  }
+
+  public async syncProblems(problems: any[]): Promise<number> {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) return 0;
+
+    const rootUri = workspaceFolders[0].uri;
+    let syncedCount = 0;
+
+    for (const problem of problems) {
+      const fileName = `${problem.id}.${problem.lang}`;
+      const fileUri = vscode.Uri.joinPath(rootUri, fileName);
+      
+      try {
+        // Check if file exists
+        await vscode.workspace.fs.stat(fileUri);
+        // If it exists, skip writing to avoid overwriting user work
+      } catch {
+        // File doesn't exist, create it
+        const content = Buffer.from(problem.code, "utf8");
+        await vscode.workspace.fs.writeFile(fileUri, content);
+        syncedCount++;
+      }
+    }
+    return syncedCount;
   }
 
   private _getHtmlForWebview(webview: vscode.Webview) {

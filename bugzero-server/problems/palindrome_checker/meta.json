@@ -1,0 +1,18 @@
+{
+  "testcases": [
+    {
+      "input": "Racecar",
+      "output": "Yes"
+    },
+    {
+      "input": "A man a plan a canal Panama",
+      "output": "Yes"
+    },
+    {
+      "input": "Hello",
+      "output": "No"
+    }
+  ],
+  "level": "medium",
+  "lang": "py"
+}

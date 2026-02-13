@@ -1,0 +1,14 @@
+{
+  "testcases": [
+    {
+      "input": "10 20 30",
+      "output": "Average is: 20.0"
+    },
+    {
+      "input": "5 5 10",
+      "output": "Average is: 6.666666666666667"
+    }
+  ],
+  "level": "easy",
+  "lang": "py"
+}
