@@ -1,0 +1,14 @@
+{
+  "lang": "py",
+  "level": "easy",
+  "testcases": [
+    {
+      "input": "2000",
+      "output": "You will be 26 years old."
+    },
+    {
+      "input": "1995",
+      "output": "You will be 31 years old."
+    }
+  ]
+}

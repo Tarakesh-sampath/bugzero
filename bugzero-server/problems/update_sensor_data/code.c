@@ -1,3 +1,8 @@
+/*
+Description: Increment every integer in a sensor data array by 1 using a separate function.
+Input: Up to 10 space-separated integers.
+Output: The incremented list of integers separated by spaces.
+*/
 #include <stdio.h>
 
 void increment_all(int *arr, int size) {
@@ -19,7 +24,6 @@ int main() {
     for (int i = 0; i < n; i++) {
         printf("%d%s", data[i], (i == n - 1 ? "" : " "));
     }
-    printf("
-");
+    printf("");
     return 0;
 }

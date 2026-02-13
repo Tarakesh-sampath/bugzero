@@ -1,3 +1,8 @@
+"""
+Description: Create a list of multiplier functions. The i-th function should multiply its input by i.
+Input: An integer to be multiplied by each function in the list.
+Output: A list of results from each multiplier function.
+"""
 import sys
 
 def make_multipliers():

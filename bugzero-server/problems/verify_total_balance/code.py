@@ -1,3 +1,8 @@
+"""
+Description: Verify if the sum of a list of transaction amounts matches an expected total.
+Input: None.
+Output: "Balance Verified" if the sum matches, otherwise an error message showing the calculated total.
+"""
 def check_balance():
     # Transactions: 0.1, 0.1, 0.1
     transactions = [0.1, 0.1, 0.1]

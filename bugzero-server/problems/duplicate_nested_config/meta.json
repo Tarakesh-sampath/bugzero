@@ -4,8 +4,7 @@
   "testcases": [
     {
       "input": "",
-      "output": "Original: dark
-New: light"
+      "output": "Original: dark\nNew: light"
     }
   ]
 }

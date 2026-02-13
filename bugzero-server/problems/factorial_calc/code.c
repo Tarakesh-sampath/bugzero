@@ -1,3 +1,8 @@
+/*
+Description: Calculate the factorial of a given integer n.
+Input: A single integer n.
+Output: The factorial of n.
+*/
 #include <stdio.h>
 
 int main() {

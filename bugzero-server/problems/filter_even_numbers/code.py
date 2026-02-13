@@ -1,3 +1,8 @@
+"""
+Description: Remove all even numbers from a given list of integers.
+Input: A JSON-formatted list of integers.
+Output: The list of integers with all even numbers removed.
+"""
 import json
 import sys
 

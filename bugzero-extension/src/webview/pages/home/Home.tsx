@@ -169,7 +169,17 @@ const Home = () => {
         );
     }
 
-    const problems = files.filter(f => f.type === 'file' && (f.name.endsWith('.c') || f.name.endsWith('.py')));
+    const problems = files
+        .filter(f => f.type === 'file' && (f.name.endsWith('.c') || f.name.endsWith('.py')))
+        .sort((a, b) => {
+            const levelOrder: Record<string, number> = { easy: 1, medium: 2, hard: 3 };
+            const problemA = problemsData.find(p => p.id === a.name.split('.')[0]);
+            const problemB = problemsData.find(p => p.id === b.name.split('.')[0]);
+            const levelA = levelOrder[problemA?.level?.toLowerCase() || ''] || 99;
+            const levelB = levelOrder[problemB?.level?.toLowerCase() || ''] || 99;
+            return levelA - levelB;
+        });
+
     const activeProblem = problemsData.find(p => activeFile === `${p.id}.${p.lang}`);
 
     const formatName = (name: string) => {

@@ -1,3 +1,8 @@
+/*
+Description: Find the maximum value in a list of integers.
+Input: The first integer n is the count, followed by n space-separated integers.
+Output: The maximum integer in the list.
+*/
 #include <stdio.h>
 
 int main() {

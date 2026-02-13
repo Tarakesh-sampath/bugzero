@@ -4,8 +4,7 @@
   "testcases": [
     {
       "input": "Alice Bob",
-      "output": "['Alice']
-['Bob']"
+      "output": "['Alice']\n['Bob']"
     }
   ]
 }

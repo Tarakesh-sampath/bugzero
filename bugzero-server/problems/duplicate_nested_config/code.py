@@ -1,3 +1,8 @@
+"""
+Description: Create a copy of a configuration dictionary, update a nested value in the copy, and verify that the original remains unchanged.
+Input: None.
+Output: The theme setting for both the original and the new configuration.
+"""
 import copy
 
 def update_config():
