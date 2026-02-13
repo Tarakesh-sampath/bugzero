@@ -13,6 +13,7 @@ const Home = () => {
     const [password, setPassword] = useState('');
     const [auth, setAuth] = useState('');
     const [error, setError] = useState('');
+    const [submittedFiles, setSubmittedFiles] = useState<Set<string>>(new Set());
 
     // @ts-ignore
     const vscode = React.useMemo(() => acquireVsCodeApi(), []);
@@ -29,6 +30,12 @@ const Home = () => {
                         setIsLoggedIn(true);
                         setAuth(message.auth);
                         setUsername(message.username);
+                        if (message.user && message.user.submissions) {
+                            const submitted = new Set<string>(
+                                message.user.submissions.map((s: any) => s.problemId)
+                            );
+                            setSubmittedFiles(submitted);
+                        }
                         vscode.postMessage({ command: 'getFiles' });
                     } else {
                         setError(message.error);
@@ -39,6 +46,13 @@ const Home = () => {
                     setAuth('');
                     setUsername('');
                     setPassword('');
+                    setSubmittedFiles(new Set());
+                    break;
+                case 'submissionResponse':
+                    if (message.success) {
+                        const problemId = message.fileName.split('.')[0];
+                        setSubmittedFiles(prev => new Set([...prev, problemId]));
+                    }
                     break;
             }
         };
@@ -133,6 +147,8 @@ const Home = () => {
                     {problems.map(file => {
                         const isPython = file.name.endsWith('.py');
                         const displayName = file.name.split('.')[0];
+                        const problemId = file.name.split('.')[0];
+                        const isSubmitted = submittedFiles.has(problemId);
                         return (
                             <tr key={file.name} style={{ borderBottom: '1px solid var(--vscode-panel-border)' }}>
                                 <td style={{ padding: '5px', fontSize: '1.2em' }}>
@@ -148,18 +164,10 @@ const Home = () => {
                                     </span>
                                 </td>
                                 <td style={{ padding: '5px' }}>
-                                    <button 
-                                        onClick={() => handleSubmit(file.name)}
-                                        style={{ 
-                                            background: 'var(--vscode-button-secondaryBackground)', 
-                                            color: 'var(--vscode-button-secondaryForeground)',
-                                            border: 'none',
-                                            padding: '2px 8px',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        Submit
-                                    </button>
+                                    <ActionButton 
+                                        isSubmitted={isSubmitted} 
+                                        onClick={() => handleSubmit(file.name)} 
+                                    />
                                 </td>
                             </tr>
                         );
@@ -171,6 +179,45 @@ const Home = () => {
                 <Button label="Refresh Files" onClick={() => vscode.postMessage({ command: 'getFiles' })} />
             </div>
         </div>
+    );
+};
+
+const ActionButton = ({ isSubmitted, onClick }: { isSubmitted: boolean, onClick: () => void }) => {
+    const [isHovered, setIsHovered] = useState(false);
+
+    if (isSubmitted && !isHovered) {
+        return (
+            <div 
+                onMouseEnter={() => setIsHovered(true)}
+                style={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center',
+                    padding: '2px 8px',
+                    color: 'var(--vscode-testing-iconPassed)',
+                    fontSize: '1.2em'
+                }}
+            >
+                ✓
+            </div>
+        );
+    }
+
+    return (
+        <button 
+            onClick={onClick}
+            onMouseLeave={() => setIsHovered(false)}
+            style={{ 
+                background: 'var(--vscode-button-secondaryBackground)', 
+                color: 'var(--vscode-button-secondaryForeground)',
+                border: 'none',
+                padding: '2px 8px',
+                cursor: 'pointer',
+                width: '100%'
+            }}
+        >
+            Submit
+        </button>
     );
 };
 

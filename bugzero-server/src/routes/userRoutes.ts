@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { prisma } from "../lib/prisma.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { AuthenticatedRequest } from "../types/index.js";
+import { getAllProblems } from "../lib/problems.js";
 
 const router = Router();
 
@@ -13,8 +14,18 @@ router.post("/register", authMiddleware, async (req, res: Response) => {
       where: { username },
       update: {},
       create: { username },
+      include: {
+        submissions: {
+          select: {
+            problemId: true
+          }
+        }
+      }
     });
-    res.json({ message: "User processed", user });
+    
+    const problems = await getAllProblems();
+    
+    res.json({ message: "User processed", user, problems });
   } catch (error) {
     res.status(500).json({ error: "Failed to process user" });
   }

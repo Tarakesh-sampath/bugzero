@@ -67,9 +67,28 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             });
 
             if (response.ok) {
+              const result: any = await response.json();
+              const problems = result.problems || [];
+
               // Persist login
               await this._context.globalState.update("loginData", { auth, username });
-              
+
+              // Create files for problems
+              const workspaceFolders = vscode.workspace.workspaceFolders;
+              if (workspaceFolders) {
+                const rootUri = workspaceFolders[0].uri;
+                for (const problem of problems) {
+                  const fileName = `${problem.id}.${problem.lang}`;
+                  const fileUri = vscode.Uri.joinPath(rootUri, fileName);
+                  const content = Buffer.from(problem.code, "utf8");
+                  try {
+                    await vscode.workspace.fs.writeFile(fileUri, content);
+                  } catch (err) {
+                    console.error(`Error writing file ${fileName}:`, err);
+                  }
+                }
+              }
+
               this._view?.webview.postMessage({
                 command: "loginResponse",
                 success: true,
@@ -150,8 +169,19 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             const result = await response.json();
             if (response.ok) {
               vscode.window.showInformationMessage(`Submitted ${fileName} successfully!`);
+              this._view?.webview.postMessage({
+                command: "submissionResponse",
+                success: true,
+                fileName,
+              });
             } else {
               vscode.window.showErrorMessage(`Submission failed: ${result.error}`);
+              this._view?.webview.postMessage({
+                command: "submissionResponse",
+                success: false,
+                fileName,
+                error: result.error,
+              });
             }
           } catch (err) {
             vscode.window.showErrorMessage(`Error submitting file: ${err}`);
