@@ -29,7 +29,7 @@
         {
           "type": "webview",
           "id": "bugzero-sidebar",
-          "name": "BugZero Sidebar 2",
+          "name": "BugZero Problems",
           "visibility": "visible"
         }
       ]
@@ -52,22 +52,13 @@
         "command": "bugzero-extension.refreshFiles",
         "title": "BugZero: Refresh Files",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "bugzero-extension.logout",
+        "title": "BugZero: Logout",
+        "icon": "$(sign-out)"
       }
-    ],
-    "menus": {
-      "view/title": [
-        {
-          "command": "bugzero-extension.refreshFiles",
-          "when": "view == bugzero-sidebar",
-          "group": "navigation"
-        },
-        {
-          "command": "bugzero-extension.pullProblems",
-          "when": "view == bugzero-sidebar",
-          "group": "navigation"
-        }
-      ]
-    }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

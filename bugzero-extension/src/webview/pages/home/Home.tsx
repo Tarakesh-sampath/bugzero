@@ -172,143 +172,183 @@ const Home = () => {
     const problems = files.filter(f => f.type === 'file' && (f.name.endsWith('.c') || f.name.endsWith('.py')));
     const activeProblem = problemsData.find(p => activeFile === `${p.id}.${p.lang}`);
 
-    return (
-        <div style={{ padding: '10px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--vscode-panel-border)', paddingBottom: '10px', marginBottom: '10px' }}>
-                <div>
-                    <h2 style={{ margin: 0 }}>Problems</h2>
-                    <span style={{ fontSize: '0.8em', opacity: 0.8 }}>Hi, {username}</span>
-                </div>
-                <button 
-                    onClick={handleLogout}
-                    style={{ 
-                        background: 'transparent', 
-                        color: 'var(--vscode-errorForeground)',
-                        border: '1px solid var(--vscode-errorForeground)',
-                        padding: '2px 8px',
-                        cursor: 'pointer',
-                        fontSize: '0.8em'
-                    }}
-                >
-                    Logout
-                </button>
-            </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                    <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--vscode-panel-border)' }}>
-                        <th style={{ padding: '5px' }}>Type</th>
-                        <th style={{ padding: '5px' }}>Name</th>
-                        <th style={{ padding: '5px' }}>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {problems.map(file => {
-                        const isPython = file.name.endsWith('.py');
-                        const displayName = file.name.split('.')[0];
-                        const problemId = file.name.split('.')[0];
-                        const isSubmitted = submittedFiles.has(problemId);
-                        const isActive = activeFile === file.name;
-                        const problemInfo = problemsData.find(p => p.id === problemId);
-                        
-                        return (
-                            <tr key={file.name} style={{ borderBottom: '1px solid var(--vscode-panel-border)', background: isActive ? 'var(--vscode-list-activeSelectionBackground)' : 'transparent' }}>
-                                <td style={{ padding: '5px', fontSize: '1.2em' }}>
-                                    {isPython ? '🐍' : 'C'}
-                                </td>
-                                <td style={{ padding: '5px' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                        <span 
-                                            onClick={() => handleOpenFile(file.name)}
-                                            style={{ cursor: 'pointer', color: isActive ? 'var(--vscode-list-activeSelectionForeground)' : 'var(--vscode-textLink-foreground)' }}
-                                            title="Click to open file"
-                                        >
-                                            {displayName}
-                                        </span>
-                                        {problemInfo && <LevelChip level={problemInfo.level} />}
-                                    </div>
-                                </td>
-                                <td style={{ padding: '5px' }}>
-                                    <ActionButton 
-                                        isSubmitted={isSubmitted} 
-                                        onClick={() => handleSubmit(file.name)} 
-                                    />
-                                </td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
+    const formatName = (name: string) => {
+        return name
+            .split(/[_-]/)
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    };
 
-            {activeProblem && (
-                <div style={{ marginTop: '20px', borderTop: '1px solid var(--vscode-panel-border)', paddingTop: '10px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <h3 style={{ margin: 0 }}>Test Cases: {activeProblem.id}</h3>
-                            <LevelChip level={activeProblem.level} />
-                        </div>
-                        <button 
-                            onClick={() => handleRunAll(activeProblem)}
-                            style={{ 
-                                background: 'var(--vscode-button-background)',
-                                color: 'var(--vscode-button-foreground)',
-                                border: 'none',
-                                padding: '4px 12px',
-                                cursor: 'pointer',
-                                fontSize: '0.85em'
-                            }}
-                        >
-                            Run All
-                        </button>
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+            {/* Top Half: Problems List */}
+            <div style={{ flex: '1 1 50%', overflowY: 'auto', padding: '10px', borderBottom: '1px solid var(--vscode-panel-border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', marginBottom: '10px' }}>
+                    <div>
+                        <h2 style={{ margin: 0 }}>Problems</h2>
+                        <span style={{ fontSize: '0.8em', opacity: 0.8 }}>Hi, {username}</span>
                     </div>
-                    {activeProblem.testcases.map((tc, index) => {
-                        const result = runResults[tc.output];
-                        return (
-                            <div key={index} style={{ marginBottom: '15px', padding: '10px', background: 'var(--vscode-sideBar-background)', border: '1px solid var(--vscode-panel-border)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-                                    <strong>Case {index + 1}</strong>
-                                    <button 
-                                        onClick={() => handleRun(`${activeProblem.id}.${activeProblem.lang}`, tc.input, tc.output)}
-                                        disabled={result?.loading}
-                                        style={{ 
-                                            background: 'var(--vscode-button-background)',
-                                            color: 'var(--vscode-button-foreground)',
-                                            border: 'none',
-                                            padding: '2px 8px',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        {result?.loading ? 'Running...' : 'Run'}
-                                    </button>
-                                </div>
-                                <div style={{ fontSize: '0.9em', opacity: 0.8 }}>
-                                    <div>Input: <code style={{ background: 'var(--vscode-textCodeBlock-background)' }}>{tc.input}</code></div>
-                                    <div>Expected: <code style={{ background: 'var(--vscode-textCodeBlock-background)' }}>{tc.output}</code></div>
-                                </div>
-                                {result && !result.loading && (
-                                    <div style={{ marginTop: '10px', paddingTop: '5px', borderTop: '1px dashed var(--vscode-panel-border)' }}>
-                                        <div style={{ color: result.success ? 'var(--vscode-testing-iconPassed)' : 'var(--vscode-errorForeground)', fontWeight: 'bold' }}>
-                                            {result.success ? 'PASS ✓' : 'FAIL ✗'}
+                </div>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                        <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--vscode-panel-border)' }}>
+                            <th style={{ padding: '5px' }}>Type</th>
+                            <th style={{ padding: '5px' }}>Name</th>
+                            <th style={{ padding: '5px' }}>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {problems.map((file, index) => {
+                            const isPython = file.name.endsWith('.py');
+                            const problemId = file.name.split('.')[0];
+                            const displayName = `${index + 1}. ${formatName(problemId)}`;
+                            const isSubmitted = submittedFiles.has(problemId);
+                            const isActive = activeFile === file.name;
+                            const problemInfo = problemsData.find(p => p.id === problemId);
+                            
+                            return (
+                                <tr key={file.name} style={{ borderBottom: '1px solid var(--vscode-panel-border)', background: isActive ? 'var(--vscode-list-activeSelectionBackground)' : 'transparent' }}>
+                                    <td style={{ padding: '5px', fontSize: '1.2em' }}>
+                                        {isPython ? '🐍' : 'C'}
+                                    </td>
+                                    <td style={{ padding: '5px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                            <span 
+                                                onClick={() => handleOpenFile(file.name)}
+                                                style={{ cursor: 'pointer', color: isActive ? 'var(--vscode-list-activeSelectionForeground)' : 'var(--vscode-textLink-foreground)' }}
+                                                title="Click to open file"
+                                            >
+                                                {displayName}
+                                            </span>
+                                            {problemInfo && <LevelChip level={problemInfo.level} />}
                                         </div>
-                                        {!result.success && (
-                                            <div style={{ fontSize: '0.85em', marginTop: '5px' }}>
-                                                {result.stderr ? (
-                                                    <pre style={{ color: 'var(--vscode-errorForeground)', whiteSpace: 'pre-wrap' }}>{result.stderr}</pre>
-                                                ) : (
-                                                    <>
-                                                        <div>Actual: <code>{result.actualOutput}</code></div>
-                                                    </>
+                                    </td>
+                                    <td style={{ padding: '5px' }}>
+                                        <ActionButton 
+                                            isSubmitted={isSubmitted} 
+                                            onClick={() => handleSubmit(file.name)} 
+                                        />
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+                {problems.length === 0 && <p style={{ marginTop: '10px', opacity: 0.7 }}>No .c or .py files found.</p>}
+            </div>
+
+            {/* Bottom Half: Test Cases */}
+            <div style={{ flex: '1 1 50%', overflowY: 'auto', background: 'var(--vscode-sideBar-background)' }}>
+                {activeProblem ? (
+                    <div>
+                        <div style={{ 
+                            padding: '12px 10px', 
+                            borderBottom: '1px solid var(--vscode-panel-border)',
+                            background: 'var(--vscode-sideBar-sectionHeader-background)',
+                            position: 'sticky',
+                            top: 0,
+                            zIndex: 10,
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center' 
+                        }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <h3 style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.8 }}>Test Cases</h3>
+                                    <LevelChip level={activeProblem.level} />
+                                </div>
+                                <div style={{ fontSize: '1.1em', fontWeight: '500' }}>{formatName(activeProblem.id)}</div>
+                            </div>
+                            <button 
+                                onClick={() => handleRunAll(activeProblem)}
+                                style={{ 
+                                    background: 'var(--vscode-button-background)',
+                                    color: 'var(--vscode-button-foreground)',
+                                    border: 'none',
+                                    padding: '6px 12px',
+                                    borderRadius: '2px',
+                                    cursor: 'pointer',
+                                    fontSize: '0.85em',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                }}
+                            >
+                                <span>▶</span> Run All
+                            </button>
+                        </div>
+                        <div style={{ padding: '10px' }}>
+                            {activeProblem.testcases.map((tc, index) => {
+                                const result = runResults[tc.output];
+                                return (
+                                    <div key={index} style={{ marginBottom: '15px', padding: '10px', background: 'var(--vscode-editor-background)', border: '1px solid var(--vscode-panel-border)', borderRadius: '4px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                            <strong style={{ fontSize: '0.9em', opacity: 0.9 }}>Case {index + 1}</strong>
+                                            <button 
+                                                onClick={() => handleRun(`${activeProblem.id}.${activeProblem.lang}`, tc.input, tc.output)}
+                                                disabled={result?.loading}
+                                                style={{ 
+                                                    background: 'var(--vscode-button-secondaryBackground)',
+                                                    color: 'var(--vscode-button-secondaryForeground)',
+                                                    border: '1px solid var(--vscode-button-border)',
+                                                    padding: '2px 10px',
+                                                    borderRadius: '2px',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.8em',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px'
+                                                }}
+                                            >
+                                                {result?.loading ? '...' : <span>▶</span>}
+                                                {result?.loading ? 'Running' : 'Run'}
+                                            </button>
+                                        </div>
+                                        <div style={{ fontSize: '0.9em', opacity: 0.8 }}>
+                                            <div style={{ marginBottom: '2px' }}>Input: <code style={{ background: 'var(--vscode-textCodeBlock-background)', padding: '0 4px', borderRadius: '2px' }}>{tc.input}</code></div>
+                                            <div>Expected: <code style={{ background: 'var(--vscode-textCodeBlock-background)', padding: '0 4px', borderRadius: '2px' }}>{tc.output}</code></div>
+                                        </div>
+                                        {result && !result.loading && (
+                                            <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px dashed var(--vscode-panel-border)' }}>
+                                                <div style={{ 
+                                                    color: result.success ? 'var(--vscode-testing-iconPassed)' : 'var(--vscode-errorForeground)', 
+                                                    fontWeight: 'bold',
+                                                    fontSize: '0.9em',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px'
+                                                }}>
+                                                    {result.success ? '✓' : '✗'} {result.success ? 'PASSED' : 'FAILED'}
+                                                </div>
+                                                {!result.success && (
+                                                    <div style={{ fontSize: '0.85em', marginTop: '5px' }}>
+                                                        {result.stderr ? (
+                                                            <pre style={{ 
+                                                                color: 'var(--vscode-errorForeground)', 
+                                                                whiteSpace: 'pre-wrap', 
+                                                                margin: '4px 0 0 0',
+                                                                padding: '6px',
+                                                                background: 'rgba(255,0,0,0.05)',
+                                                                borderRadius: '2px'
+                                                            }}>{result.stderr}</pre>
+                                                        ) : (
+                                                            <div style={{ marginTop: '4px' }}>Actual: <code style={{ color: 'var(--vscode-errorForeground)', fontWeight: 'bold' }}>{result.actualOutput || '(empty)'}</code></div>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </div>
                                         )}
                                     </div>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-
-            {problems.length === 0 && <p style={{ marginTop: '10px', opacity: 0.7 }}>No .c or .py files found.</p>}
+                                );
+                            })}
+                        </div>
+                    </div>
+                ) : (
+                    <div style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', opacity: 0.5 }}>
+                        <p>Select a problem to view test cases</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

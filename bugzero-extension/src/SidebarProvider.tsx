@@ -352,6 +352,21 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     });
   }
 
+  public async logout() {
+    const result = await vscode.window.showInformationMessage(
+      "Are you sure you want to log out?",
+      "Yes",
+      "No",
+    );
+
+    if (result === "Yes") {
+      await this._context.globalState.update("loginData", undefined);
+      this._view?.webview.postMessage({ command: "logoutSuccess" });
+      // Refresh files after logout to show local state
+      await this.pullProblems(false);
+    }
+  }
+
   public async pullProblems(showMessages = true) {
     const savedAuth = this._context.globalState.get<{
       auth: string;
