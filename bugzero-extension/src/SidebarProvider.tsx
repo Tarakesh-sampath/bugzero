@@ -1,5 +1,9 @@
 import * as vscode from "vscode";
+import { exec } from "child_process";
+import { promisify } from "util";
+import * as path from "path";
 
+const execPromise = promisify(exec);
 const BASE_URL = "http://localhost:3000";
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
@@ -20,17 +24,67 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
+    // Track active editor
+    this._context.subscriptions.push(
+      vscode.window.onDidChangeActiveTextEditor((editor) => {
+        if (editor) {
+          const fileName = path.basename(editor.document.fileName);
+          this._view?.webview.postMessage({
+            command: "activeFile",
+            fileName,
+          });
+        }
+      })
+    );
+
     webviewView.webview.onDidReceiveMessage(async (data) => {
       console.log("Message received in backend:", data.command);
       switch (data.command) {
         case "checkLogin": {
           const savedAuth = this._context.globalState.get<{ auth: string, username: string }>("loginData");
           if (savedAuth) {
+            try {
+              const response = await fetch(`${BASE_URL}/register`, {
+                method: "POST",
+                headers: {
+                  Authorization: `Basic ${savedAuth.auth}`,
+                },
+              });
+
+              if (response.ok) {
+                const result: any = await response.json();
+                this._view?.webview.postMessage({
+                  command: "loginResponse",
+                  success: true,
+                  auth: savedAuth.auth,
+                  username: savedAuth.username,
+                  user: result.user,
+                  problems: result.problems,
+                });
+              } else {
+                // If token expired or invalid, clear it
+                await this._context.globalState.update("loginData", undefined);
+                this._view?.webview.postMessage({
+                  command: "loginResponse",
+                  success: false,
+                });
+              }
+            } catch (err) {
+              // Network error, still show logged in but maybe with a warning
+              this._view?.webview.postMessage({
+                command: "loginResponse",
+                success: true,
+                auth: savedAuth.auth,
+                username: savedAuth.username,
+              });
+            }
+          }
+          // Also send active file on checkLogin
+          const activeEditor = vscode.window.activeTextEditor;
+          if (activeEditor) {
             this._view?.webview.postMessage({
-              command: "loginResponse",
-              success: true,
-              auth: savedAuth.auth,
-              username: savedAuth.username,
+              command: "activeFile",
+              fileName: path.basename(activeEditor.document.fileName),
             });
           }
           break;
@@ -94,6 +148,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 success: true,
                 auth,
                 username,
+                user: result.user,
+                problems: problems, // Send problems to webview for testcases
               });
             } else {
               const errorData = await response.json().catch(() => ({}));
@@ -140,6 +196,78 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           } catch (err) {
             vscode.window.showErrorMessage(`Error opening file: ${err}`);
           }
+          break;
+        }
+        case "run": {
+          const { fileName, input, expectedOutput } = data.value;
+          const workspaceFolders = vscode.workspace.workspaceFolders;
+          if (!workspaceFolders) return;
+
+          const rootPath = workspaceFolders[0].uri.fsPath;
+          const filePath = path.join(rootPath, fileName);
+          const isPython = fileName.endsWith(".py");
+          const isC = fileName.endsWith(".c");
+
+          let command = "";
+          let args: string[] = [];
+
+          if (isPython) {
+            command = "python3";
+            args = [filePath];
+          } else if (isC) {
+            const outputExe = path.join(rootPath, "temp_out");
+            try {
+              const { stderr: compileStderr } = await execPromise(`gcc "${filePath}" -o "${outputExe}"`);
+              if (compileStderr) {
+                console.warn("Compile warning:", compileStderr);
+              }
+              command = outputExe;
+              args = [];
+            } catch (err: any) {
+              this._view?.webview.postMessage({
+                command: "runResult",
+                success: false,
+                actualOutput: "",
+                expectedOutput,
+                stderr: `Compilation Error:\n${err.stderr || err.message}`,
+              });
+              return;
+            }
+          }
+
+          if (!command) return;
+
+          const { spawn } = require("child_process");
+          const child = spawn(command, args, { cwd: rootPath });
+
+          let stdout = "";
+          let stderr = "";
+
+          child.stdout.on("data", (data: Buffer) => {
+            stdout += data.toString();
+          });
+
+          child.stderr.on("data", (data: Buffer) => {
+            stderr += data.toString();
+          });
+
+          child.on("close", (code: number) => {
+            const actualOutput = stdout.trim();
+            const success = actualOutput === expectedOutput.trim();
+
+            this._view?.webview.postMessage({
+              command: "runResult",
+              success,
+              actualOutput,
+              expectedOutput,
+              stderr: stderr || (code !== 0 ? `Process exited with code ${code}` : ""),
+            });
+          });
+
+          if (input) {
+            child.stdin.write(input);
+          }
+          child.stdin.end();
           break;
         }
         case "submit": {

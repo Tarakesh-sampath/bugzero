@@ -5,6 +5,7 @@ export interface Problem {
   id: string;
   lang: string;
   code: string;
+  testcases: { input: string; output: string }[];
 }
 
 export async function getAllProblems(): Promise<Problem[]> {
@@ -30,7 +31,8 @@ export async function getAllProblems(): Promise<Problem[]> {
           problems.push({
             id: dir,
             lang,
-            code
+            code,
+            testcases: meta.testcases || []
           });
         }
       } catch (err) {

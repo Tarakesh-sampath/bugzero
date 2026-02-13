@@ -6,6 +6,13 @@ interface FileEntry {
     type: 'file' | 'directory';
 }
 
+interface Problem {
+    id: string;
+    lang: string;
+    code: string;
+    testcases: { input: string; output: string }[];
+}
+
 const Home = () => {
     const [files, setFiles] = useState<FileEntry[]>([]);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -14,6 +21,9 @@ const Home = () => {
     const [auth, setAuth] = useState('');
     const [error, setError] = useState('');
     const [submittedFiles, setSubmittedFiles] = useState<Set<string>>(new Set());
+    const [problemsData, setProblemsData] = useState<Problem[]>([]);
+    const [activeFile, setActiveFile] = useState<string | null>(null);
+    const [runResults, setRunResults] = useState<Record<string, any>>({});
 
     // @ts-ignore
     const vscode = React.useMemo(() => acquireVsCodeApi(), []);
@@ -36,6 +46,9 @@ const Home = () => {
                             );
                             setSubmittedFiles(submitted);
                         }
+                        if (message.problems) {
+                            setProblemsData(message.problems);
+                        }
                         vscode.postMessage({ command: 'getFiles' });
                     } else {
                         setError(message.error);
@@ -47,12 +60,22 @@ const Home = () => {
                     setUsername('');
                     setPassword('');
                     setSubmittedFiles(new Set());
+                    setProblemsData([]);
                     break;
                 case 'submissionResponse':
                     if (message.success) {
                         const problemId = message.fileName.split('.')[0];
                         setSubmittedFiles(prev => new Set([...prev, problemId]));
                     }
+                    break;
+                case 'activeFile':
+                    setActiveFile(message.fileName);
+                    break;
+                case 'runResult':
+                    setRunResults(prev => ({
+                        ...prev,
+                        [message.expectedOutput]: message // Using expectedOutput as key is a bit hacky but works for simple cases
+                    }));
                     break;
             }
         };
@@ -84,6 +107,21 @@ const Home = () => {
         vscode.postMessage({ command: 'openFile', value: { fileName } });
     };
 
+    const handleRun = (fileName: string, input: string, output: string) => {
+        setRunResults(prev => ({ ...prev, [output]: { loading: true } }));
+        vscode.postMessage({ 
+            command: 'run', 
+            value: { fileName, input, expectedOutput: output } 
+        });
+    };
+
+    const handleRunAll = (problem: Problem) => {
+        const fileName = `${problem.id}.${problem.lang}`;
+        problem.testcases.forEach(tc => {
+            handleRun(fileName, tc.input, tc.output);
+        });
+    };
+
     if (!isLoggedIn) {
         return (
             <div style={{ padding: '20px' }}>
@@ -113,6 +151,7 @@ const Home = () => {
     }
 
     const problems = files.filter(f => f.type === 'file' && (f.name.endsWith('.c') || f.name.endsWith('.py')));
+    const activeProblem = problemsData.find(p => activeFile === `${p.id}.${p.lang}`);
 
     return (
         <div style={{ padding: '10px' }}>
@@ -149,15 +188,16 @@ const Home = () => {
                         const displayName = file.name.split('.')[0];
                         const problemId = file.name.split('.')[0];
                         const isSubmitted = submittedFiles.has(problemId);
+                        const isActive = activeFile === file.name;
                         return (
-                            <tr key={file.name} style={{ borderBottom: '1px solid var(--vscode-panel-border)' }}>
+                            <tr key={file.name} style={{ borderBottom: '1px solid var(--vscode-panel-border)', background: isActive ? 'var(--vscode-list-activeSelectionBackground)' : 'transparent' }}>
                                 <td style={{ padding: '5px', fontSize: '1.2em' }}>
                                     {isPython ? '🐍' : 'C'}
                                 </td>
                                 <td style={{ padding: '5px' }}>
                                     <span 
                                         onClick={() => handleOpenFile(file.name)}
-                                        style={{ cursor: 'pointer', color: 'var(--vscode-textLink-foreground)' }}
+                                        style={{ cursor: 'pointer', color: isActive ? 'var(--vscode-list-activeSelectionForeground)' : 'var(--vscode-textLink-foreground)' }}
                                         title="Click to open file"
                                     >
                                         {displayName}
@@ -174,6 +214,73 @@ const Home = () => {
                     })}
                 </tbody>
             </table>
+
+            {activeProblem && (
+                <div style={{ marginTop: '20px', borderTop: '1px solid var(--vscode-panel-border)', paddingTop: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                        <h3 style={{ margin: 0 }}>Test Cases: {activeProblem.id}</h3>
+                        <button 
+                            onClick={() => handleRunAll(activeProblem)}
+                            style={{ 
+                                background: 'var(--vscode-button-background)',
+                                color: 'var(--vscode-button-foreground)',
+                                border: 'none',
+                                padding: '4px 12px',
+                                cursor: 'pointer',
+                                fontSize: '0.85em'
+                            }}
+                        >
+                            Run All
+                        </button>
+                    </div>
+                    {activeProblem.testcases.map((tc, index) => {
+                        const result = runResults[tc.output];
+                        return (
+                            <div key={index} style={{ marginBottom: '15px', padding: '10px', background: 'var(--vscode-sideBar-background)', border: '1px solid var(--vscode-panel-border)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                                    <strong>Case {index + 1}</strong>
+                                    <button 
+                                        onClick={() => handleRun(`${activeProblem.id}.${activeProblem.lang}`, tc.input, tc.output)}
+                                        disabled={result?.loading}
+                                        style={{ 
+                                            background: 'var(--vscode-button-background)',
+                                            color: 'var(--vscode-button-foreground)',
+                                            border: 'none',
+                                            padding: '2px 8px',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        {result?.loading ? 'Running...' : 'Run'}
+                                    </button>
+                                </div>
+                                <div style={{ fontSize: '0.9em', opacity: 0.8 }}>
+                                    <div>Input: <code style={{ background: 'var(--vscode-textCodeBlock-background)' }}>{tc.input}</code></div>
+                                    <div>Expected: <code style={{ background: 'var(--vscode-textCodeBlock-background)' }}>{tc.output}</code></div>
+                                </div>
+                                {result && !result.loading && (
+                                    <div style={{ marginTop: '10px', paddingTop: '5px', borderTop: '1px dashed var(--vscode-panel-border)' }}>
+                                        <div style={{ color: result.success ? 'var(--vscode-testing-iconPassed)' : 'var(--vscode-errorForeground)', fontWeight: 'bold' }}>
+                                            {result.success ? 'PASS ✓' : 'FAIL ✗'}
+                                        </div>
+                                        {!result.success && (
+                                            <div style={{ fontSize: '0.85em', marginTop: '5px' }}>
+                                                {result.stderr ? (
+                                                    <pre style={{ color: 'var(--vscode-errorForeground)', whiteSpace: 'pre-wrap' }}>{result.stderr}</pre>
+                                                ) : (
+                                                    <>
+                                                        <div>Actual: <code>{result.actualOutput}</code></div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
             {problems.length === 0 && <p style={{ marginTop: '10px', opacity: 0.7 }}>No .c or .py files found.</p>}
             <div style={{ marginTop: '20px' }}>
                 <Button label="Refresh Files" onClick={() => vscode.postMessage({ command: 'getFiles' })} />
