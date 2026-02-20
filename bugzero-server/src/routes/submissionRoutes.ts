@@ -30,8 +30,19 @@ router.post("/submit", authMiddleware, async (req, res: Response) => {
 
     console.log(`User resolved: id=${user.id}`);
 
-    const submission = await prisma.submission.create({
-      data: {
+    const submission = await prisma.submission.upsert({
+      where: {
+        userId_problemId: {
+          userId: user.id,
+          problemId,
+        },
+      },
+      update: {
+        solution,
+        duration,
+        createdAt: new Date(),
+      },
+      create: {
         problemId,
         solution,
         duration,

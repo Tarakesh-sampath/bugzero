@@ -177,9 +177,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
           if (result === "Yes") {
             await this._context.globalState.update("loginData", undefined);
+            await this.cleanupProblems();
             this._view?.webview.postMessage({ command: "logoutSuccess" });
-            // Refresh files after logout to show local state
-            await this.pullProblems(false);
+            // Refresh files after logout to show empty local state (after cleanup)
+            await this.refreshFiles();
           }
           break;
         }
@@ -370,9 +371,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     if (result === "Yes") {
       await this._context.globalState.update("loginData", undefined);
+      await this.cleanupProblems();
       this._view?.webview.postMessage({ command: "logoutSuccess" });
-      // Refresh files after logout to show local state
-      await this.pullProblems(false);
+      // Refresh files after logout to show empty local state
+      await this.refreshFiles();
     }
   }
 
