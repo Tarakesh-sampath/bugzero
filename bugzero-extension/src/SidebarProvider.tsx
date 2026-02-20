@@ -169,17 +169,23 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           break;
         }
         case "logout": {
+          const { submissions } = data.value || {};
           const result = await vscode.window.showInformationMessage(
-            "Are you sure you want to log out?",
+            "Are you sure you want to end the session? All your progress will be submitted.",
             "Yes",
             "No",
           );
-
           if (result === "Yes") {
+            if (submissions && Array.isArray(submissions)) {
+              for (const sub of submissions) {
+                if (sub.fileName && sub.auth) {
+                  await this.submitProblem(sub.fileName, sub.auth, sub.duration, sub.full);
+                }
+              }
+            }
             await this._context.globalState.update("loginData", undefined);
             await this.cleanupProblems();
             this._view?.webview.postMessage({ command: "logoutSuccess" });
-            // Refresh files after logout to show empty local state (after cleanup)
             await this.refreshFiles();
           }
           break;
@@ -335,8 +341,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           break;
         }
         case "submit": {
-          const { fileName, auth, duration } = data.value;
-          await this.submitProblem(fileName, auth, duration);
+          const { fileName, auth, duration, full } = data.value;
+          await this.submitProblem(fileName, auth, duration, full);
           break;
         }
       }
@@ -347,6 +353,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     fileName: string,
     auth: string,
     duration?: number,
+    full?: boolean,
   ) {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders) {
@@ -368,6 +375,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           problemId: fileName.split(".")[0],
           solution: content,
           duration,
+          full,
         }),
       });
 

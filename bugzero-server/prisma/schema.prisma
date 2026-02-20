@@ -20,6 +20,7 @@ model Submission {
   problemId String
   solution  String   @db.Text
   duration  Int?
+  full      Boolean  @default(false)
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
   userId    Int

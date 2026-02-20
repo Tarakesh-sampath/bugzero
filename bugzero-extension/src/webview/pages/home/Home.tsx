@@ -134,20 +134,38 @@ const Home = () => {
         vscode.postMessage({ command: 'login', value: { username, password, seed } });
     };
 
+    const isProblemFullySolved = (problem: Problem) => {
+        if (!problem.testcases || problem.testcases.length === 0) return false;
+        return problem.testcases.every(tc => runResults[tc.output]?.success === true);
+    };
+
     const handleLogout = () => {
+        const submissions = problems.map(file => {
+            const problemId = file.name.split('.')[0];
+            const problem = problemsData.find(p => p.id === problemId);
+            return {
+                fileName: file.name,
+                duration: elapsedSeconds,
+                auth,
+                full: problem ? isProblemFullySolved(problem) : false
+            };
+        });
+
         vscode.postMessage({
             command: 'logout',
-            value: {
-                fileName: activeFile,
-                duration: elapsedSeconds,
-                auth
-            }
+            value: { submissions }
         });
     };
 
     const handleSubmit = (fileName: string) => {
-        console.log("Submitting file in webview:", fileName);
-        vscode.postMessage({ command: 'submit', value: { fileName, auth, duration: elapsedSeconds } });
+        const problemId = fileName.split('.')[0];
+        const problem = problemsData.find(p => p.id === problemId);
+        const full = problem ? isProblemFullySolved(problem) : false;
+        console.log("Submitting file in webview:", fileName, "Full solved:", full);
+        vscode.postMessage({
+            command: 'submit',
+            value: { fileName, auth, duration: elapsedSeconds, full }
+        });
     };
 
     const handleOpenFile = (fileName: string) => {

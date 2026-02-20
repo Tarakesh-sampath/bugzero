@@ -7,13 +7,14 @@ const router = Router();
 
 router.post("/submit", authMiddleware, async (req, res: Response) => {
   const { username } = req as AuthenticatedRequest;
-  const { problemId, solution, duration } = req.body as {
+  const { problemId, solution, duration, full } = req.body as {
     problemId?: string;
     solution?: string;
     duration?: number;
+    full?: boolean;
   };
 
-  console.log(`Submission attempt: user=${username}, problemId=${problemId}`);
+  console.log(`Submission attempt: user=${username}, problemId=${problemId}, full=${full}`);
 
   if (!problemId || !solution) {
     return res
@@ -40,12 +41,14 @@ router.post("/submit", authMiddleware, async (req, res: Response) => {
       update: {
         solution,
         duration,
+        full: !!full,
         createdAt: new Date(),
       },
       create: {
         problemId,
         solution,
         duration,
+        full: !!full,
         userId: user.id,
       },
     });
