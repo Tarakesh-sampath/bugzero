@@ -13,10 +13,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     private readonly _extensionUri: vscode.Uri,
     private readonly _context: vscode.ExtensionContext,
   ) {
-    this._baseUrl =
-      _context.extensionMode === vscode.ExtensionMode.Production
-        ? "https://bugzero.onrender.com"
-        : "http://localhost:3000";
+    this._baseUrl = "https://bugzero-kbkl.onrender.com";
+    //   _context.extensionMode === vscode.ExtensionMode.Production
+    //     ? "https://bugzero-kbkl.onrender.com"
+    //     : "http://localhost:3000";
   }
 
   public resolveWebviewView(webviewView: vscode.WebviewView) {

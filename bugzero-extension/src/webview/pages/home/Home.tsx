@@ -198,6 +198,20 @@ const Home = () => {
                         <h2 style={{ margin: 0 }}>Problems</h2>
                         <span style={{ fontSize: '0.8em', opacity: 0.8 }}>Hi, {username}</span>
                     </div>
+                    <button
+                        onClick={handleLogout}
+                        style={{
+                            background: 'var(--vscode-button-secondaryBackground)',
+                            color: 'var(--vscode-button-secondaryForeground)',
+                            border: '1px solid var(--vscode-button-border)',
+                            padding: '4px 8px',
+                            borderRadius: '2px',
+                            cursor: 'pointer',
+                            fontSize: '0.8em'
+                        }}
+                    >
+                        Logout
+                    </button>
                 </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
