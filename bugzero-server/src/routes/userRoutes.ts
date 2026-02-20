@@ -2,7 +2,7 @@ import { Router, Response } from "express";
 import { prisma } from "../lib/prisma.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { AuthenticatedRequest } from "../types/index.js";
-import { getAllProblems } from "../lib/problems.js";
+import { getAllProblems, getFilteredProblems } from "../lib/problems.js";
 
 const router = Router();
 
@@ -10,6 +10,7 @@ router.post("/register", authMiddleware, async (req, res: Response) => {
   const { username } = req as AuthenticatedRequest;
 
   try {
+    const { seed } = req.body;
     const user = await prisma.user.upsert({
       where: { username },
       update: {},
@@ -22,9 +23,9 @@ router.post("/register", authMiddleware, async (req, res: Response) => {
         }
       }
     });
-    
-    const problems = await getAllProblems();
-    
+
+    const problems = await getFilteredProblems(seed);
+
     res.json({ message: "User processed", user, problems });
   } catch (error) {
     console.error("Error in /register:", error);
@@ -34,7 +35,8 @@ router.post("/register", authMiddleware, async (req, res: Response) => {
 
 router.get("/problems", authMiddleware, async (req, res: Response) => {
   try {
-    const problems = await getAllProblems();
+    const seed = req.query.seed as string;
+    const problems = await getFilteredProblems(seed);
     res.json(problems);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch problems" });

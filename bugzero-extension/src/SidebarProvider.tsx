@@ -110,8 +110,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             const response = await fetch(`${this._baseUrl}/register`, {
               method: "POST",
               headers: {
+                "Content-Type": "application/json",
                 Authorization: `Basic ${auth}`,
               },
+              body: JSON.stringify({ seed: data.value.seed }),
             });
 
             if (response.ok) {
@@ -123,6 +125,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 auth,
                 username,
               });
+
+              // Clean up old files before syncing new ones
+              await this.cleanupProblems();
 
               // Sync problems (write missing ones)
               await this.syncProblems(problems);
@@ -137,7 +142,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
               });
 
               // Also refresh file list
-              await this.pullProblems(false);
+              await this.pullProblems(false, data.value.seed);
             } else {
               const errorData = await response.json().catch(() => ({}));
               this._view?.webview.postMessage({
@@ -367,7 +372,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  public async pullProblems(showMessages = true) {
+  public async pullProblems(showMessages = true, seed?: string) {
     const savedAuth = this._context.globalState.get<{
       auth: string;
       username: string;
@@ -403,7 +408,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     }
 
     try {
-      const response = await fetch(`${this._baseUrl}/problems`, {
+      const url = seed
+        ? `${this._baseUrl}/problems?seed=${encodeURIComponent(seed)}`
+        : `${this._baseUrl}/problems`;
+
+      const response = await fetch(url, {
         headers: {
           Authorization: `Basic ${savedAuth.auth}`,
         },
@@ -462,6 +471,27 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       }
     }
     return syncedCount;
+  }
+
+  public async cleanupProblems() {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) return;
+
+    const rootUri = workspaceFolders[0].uri;
+    try {
+      const entries = await vscode.workspace.fs.readDirectory(rootUri);
+      for (const [name, type] of entries) {
+        if (
+          type === vscode.FileType.File &&
+          (name.endsWith(".py") || name.endsWith(".c"))
+        ) {
+          const fileUri = vscode.Uri.joinPath(rootUri, name);
+          await vscode.workspace.fs.delete(fileUri);
+        }
+      }
+    } catch (err) {
+      console.error("Cleanup error:", err);
+    }
   }
 
   private _getHtmlForWebview(webview: vscode.Webview) {

@@ -48,3 +48,35 @@ export async function getAllProblems(): Promise<Problem[]> {
     return [];
   }
 }
+
+export async function getFilteredProblems(seed?: string | null): Promise<Problem[]> {
+  const allProblems = await getAllProblems();
+
+  if (!seed) return allProblems;
+
+  const match = seed.match(/^(\d)([pc])$/i);
+  if (!match) return allProblems;
+
+  const levelMap: Record<string, string> = {
+    '1': 'easy',
+    '2': 'medium',
+    '3': 'hard'
+  };
+  const langMap: Record<string, string> = {
+    'p': 'py',
+    'c': 'c'
+  };
+
+  const level = levelMap[match[1]];
+  const lang = langMap[match[2].toLowerCase()];
+
+  const filtered = allProblems.filter(p =>
+    p.level.toLowerCase() === level && p.lang.toLowerCase() === lang
+  );
+
+  if (filtered.length === 0) return [];
+
+  // Return one random problem from the filtered list
+  const randomIndex = Math.floor(Math.random() * filtered.length);
+  return [filtered[randomIndex]];
+}

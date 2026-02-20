@@ -26,6 +26,7 @@ const Home = () => {
     const [activeFile, setActiveFile] = useState<string | null>(null);
     const [runResults, setRunResults] = useState<Record<string, any>>({});
     const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const [seed, setSeed] = useState('');
 
     // @ts-ignore
     const vscode = React.useMemo(() => acquireVsCodeApi(), []);
@@ -101,10 +102,10 @@ const Home = () => {
             setError('Please enter both username and password.');
             return;
         }
-        console.log("Attempting login in webview for:", username);
+        console.log("Attempting login in webview for:", username, "with seed:", seed);
         setError('');
         setIsLoggingIn(true);
-        vscode.postMessage({ command: 'login', value: { username, password } });
+        vscode.postMessage({ command: 'login', value: { username, password, seed } });
     };
 
     const handleLogout = () => {
@@ -155,6 +156,15 @@ const Home = () => {
                         value={password}
                         disabled={isLoggingIn}
                         onChange={e => setPassword(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                        style={{ padding: '5px', background: 'var(--vscode-input-background)', color: 'var(--vscode-input-foreground)', border: '1px solid var(--vscode-input-border)' }}
+                    />
+                    <input
+                        type="text"
+                        placeholder="Seed (e.g. 1p, 2c)"
+                        value={seed}
+                        disabled={isLoggingIn}
+                        onChange={e => setSeed(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleLogin()}
                         style={{ padding: '5px', background: 'var(--vscode-input-background)', color: 'var(--vscode-input-foreground)', border: '1px solid var(--vscode-input-border)' }}
                     />
