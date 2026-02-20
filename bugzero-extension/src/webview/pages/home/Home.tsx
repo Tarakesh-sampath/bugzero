@@ -213,7 +213,7 @@ const Home = () => {
     }
 
     const problems = files
-        .filter(f => f.type === 'file' && (f.name.endsWith('.c') || f.name.endsWith('.py')))
+        .filter(f => f.type === 'file' && (f.name.endsWith('.c') || f.name.endsWith('.py') || f.name.endsWith('.java')))
         .sort((a, b) => {
             const levelOrder: Record<string, number> = { easy: 1, medium: 2, hard: 3 };
             const problemA = problemsData.find(p => p.id === a.name.split('.')[0]);
@@ -294,7 +294,7 @@ const Home = () => {
                             return (
                                 <tr key={file.name} style={{ borderBottom: '1px solid var(--vscode-panel-border)', background: isActive ? 'var(--vscode-list-activeSelectionBackground)' : 'transparent' }}>
                                     <td style={{ padding: '5px', fontSize: '1.2em' }}>
-                                        {isPython ? '🐍' : 'C'}
+                                        {isPython ? '🐍' : (file.name.endsWith('.java') ? '☕' : 'C')}
                                     </td>
                                     <td style={{ padding: '5px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
@@ -319,7 +319,7 @@ const Home = () => {
                         })}
                     </tbody>
                 </table>
-                {problems.length === 0 && <p style={{ marginTop: '10px', opacity: 0.7 }}>No .c or .py files found.</p>}
+                {problems.length === 0 && <p style={{ marginTop: '10px', opacity: 0.7 }}>No .c, .py or .java files found.</p>}
             </div>
 
             {/* Bottom Half: Test Cases */}

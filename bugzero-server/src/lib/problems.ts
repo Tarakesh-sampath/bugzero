@@ -54,7 +54,7 @@ export async function getFilteredProblems(seed?: string | null): Promise<Problem
 
   if (!seed) return allProblems;
 
-  const match = seed.match(/^(\d)([pc])$/i);
+  const match = seed.match(/^(\d)([pcj])$/i);
   if (!match) return allProblems;
 
   const levelMap: Record<string, string> = {
@@ -64,7 +64,8 @@ export async function getFilteredProblems(seed?: string | null): Promise<Problem
   };
   const langMap: Record<string, string> = {
     'p': 'py',
-    'c': 'c'
+    'c': 'c',
+    'j': 'java'
   };
 
   const level = levelMap[match[1]];

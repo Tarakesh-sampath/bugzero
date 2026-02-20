@@ -212,6 +212,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           const filePath = path.join(rootPath, fileName);
           const isPython = fileName.endsWith(".py");
           const isC = fileName.endsWith(".c");
+          const isJava = fileName.endsWith(".java");
 
           let command = "";
           let args: string[] = [];
@@ -240,6 +241,27 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 actualOutput: "",
                 expectedOutput,
                 stderr: `Compilation Error:\n${err.stderr || err.message}`,
+              });
+              return;
+            }
+          } else if (isJava) {
+            try {
+              const { stderr: compileStderr } = await execPromise(
+                `javac "${filePath}"`,
+              );
+              if (compileStderr) {
+                console.warn("Java Compile warning:", compileStderr);
+              }
+              const className = fileName.replace(".java", "");
+              command = "java";
+              args = ["-cp", rootPath, className];
+            } catch (err: any) {
+              this._view?.webview.postMessage({
+                command: "runResult",
+                success: false,
+                actualOutput: "",
+                expectedOutput,
+                stderr: `Java Compilation Error:\n${err.stderr || err.message}`,
               });
               return;
             }
@@ -294,6 +316,14 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             if (isC && command.startsWith(rootPath)) {
               fs.unlink(command, (err) => {
                 if (err) console.error("Error deleting temp exe:", err);
+              });
+            }
+            // Clean up Java class file
+            if (isJava) {
+              const classPath = filePath.replace(".java", ".class");
+              fs.unlink(classPath, (err) => {
+                if (err)
+                  console.error("Error deleting temp class file:", err);
               });
             }
           });
@@ -520,7 +550,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       for (const [name, type] of entries) {
         if (
           type === vscode.FileType.File &&
-          (name.endsWith(".py") || name.endsWith(".c"))
+          (name.endsWith(".py") ||
+            name.endsWith(".c") ||
+            name.endsWith(".java") ||
+            name.endsWith(".class"))
         ) {
           const fileUri = vscode.Uri.joinPath(rootUri, name);
           await vscode.workspace.fs.delete(fileUri);
