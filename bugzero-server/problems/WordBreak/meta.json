@@ -1,0 +1,18 @@
+{
+    "lang": "java",
+    "level": "hard",
+    "testcases": [
+        {
+            "input": "leetcode\n2 leet code\n",
+            "output": "true"
+        },
+        {
+            "input": "applepenapple\n2 apple pen\n",
+            "output": "true"
+        },
+        {
+            "input": "catsandog\n5 cats dog sand and cat\n",
+            "output": "false"
+        }
+    ]
+}

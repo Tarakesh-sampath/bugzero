@@ -1,0 +1,18 @@
+{
+    "lang": "java",
+    "level": "medium",
+    "testcases": [
+        {
+            "input": "anagram\nnagaram\n",
+            "output": "true"
+        },
+        {
+            "input": "rat\ncar\n",
+            "output": "false"
+        },
+        {
+            "input": "a\nab\n",
+            "output": "false"
+        }
+    ]
+}

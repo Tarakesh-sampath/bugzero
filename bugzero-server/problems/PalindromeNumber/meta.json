@@ -1,0 +1,18 @@
+{
+    "lang": "java",
+    "level": "easy",
+    "testcases": [
+        {
+            "input": "121\n",
+            "output": "true"
+        },
+        {
+            "input": "-121\n",
+            "output": "false"
+        },
+        {
+            "input": "10\n",
+            "output": "false"
+        }
+    ]
+}

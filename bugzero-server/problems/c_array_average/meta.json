@@ -1,0 +1,14 @@
+{
+    "lang": "c",
+    "level": "easy",
+    "testcases": [
+        {
+            "input": "4 1 2 3 4\n",
+            "output": "2.50"
+        },
+        {
+            "input": "3 10 20 31\n",
+            "output": "20.33"
+        }
+    ]
+}

@@ -1,0 +1,18 @@
+{
+    "lang": "py",
+    "level": "hard",
+    "testcases": [
+        {
+            "input": "(()\n",
+            "output": "2"
+        },
+        {
+            "input": ")()())\n",
+            "output": "4"
+        },
+        {
+            "input": "()(()\n",
+            "output": "2"
+        }
+    ]
+}
