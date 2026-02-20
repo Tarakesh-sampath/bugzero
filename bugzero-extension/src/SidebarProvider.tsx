@@ -306,60 +306,63 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         }
         case "submit": {
           const { fileName, auth, duration } = data.value;
-          const workspaceFolders = vscode.workspace.workspaceFolders;
-          if (!workspaceFolders) {
-            return;
-          }
-
-          const fileUri = vscode.Uri.joinPath(
-            workspaceFolders[0].uri,
-            fileName,
-          );
-          try {
-            const contentBuffer = await vscode.workspace.fs.readFile(fileUri);
-            const content = new TextDecoder().decode(contentBuffer);
-
-            const response = await fetch(`${this._baseUrl}/submit`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Basic ${auth}`,
-              },
-              body: JSON.stringify({
-                problemId: fileName.split(".")[0],
-                solution: content,
-                duration,
-              }),
-            });
-
-            const result = await response.json();
-            if (response.ok) {
-              vscode.window.showInformationMessage(
-                `Submitted ${fileName} successfully!`,
-              );
-              this._view?.webview.postMessage({
-                command: "submissionResponse",
-                success: true,
-                fileName,
-              });
-            } else {
-              vscode.window.showErrorMessage(
-                `Submission failed: ${result.error}`,
-              );
-              this._view?.webview.postMessage({
-                command: "submissionResponse",
-                success: false,
-                fileName,
-                error: result.error,
-              });
-            }
-          } catch (err) {
-            vscode.window.showErrorMessage(`Error submitting file: ${err}`);
-          }
+          await this.submitProblem(fileName, auth, duration);
           break;
         }
       }
     });
+  }
+
+  public async submitProblem(
+    fileName: string,
+    auth: string,
+    duration?: number,
+  ) {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) {
+      return;
+    }
+
+    const fileUri = vscode.Uri.joinPath(workspaceFolders[0].uri, fileName);
+    try {
+      const contentBuffer = await vscode.workspace.fs.readFile(fileUri);
+      const content = new TextDecoder().decode(contentBuffer);
+
+      const response = await fetch(`${this._baseUrl}/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${auth}`,
+        },
+        body: JSON.stringify({
+          problemId: fileName.split(".")[0],
+          solution: content,
+          duration,
+        }),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        vscode.window.showInformationMessage(
+          `Submitted ${fileName} successfully!`,
+        );
+        this._view?.webview.postMessage({
+          command: "submissionResponse",
+          success: true,
+          fileName,
+        });
+      } else {
+        vscode.window.showErrorMessage(`Submission failed: ${result.error}`);
+        this._view?.webview.postMessage({
+          command: "submissionResponse",
+          success: false,
+          fileName,
+          error: result.error,
+        });
+      }
+    } catch (err) {
+      vscode.window.showErrorMessage(`Error submitting file: ${err}`);
+    }
   }
 
   public async logout() {

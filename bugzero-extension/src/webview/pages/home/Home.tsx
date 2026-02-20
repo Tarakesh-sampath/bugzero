@@ -135,7 +135,14 @@ const Home = () => {
     };
 
     const handleLogout = () => {
-        vscode.postMessage({ command: 'logout' });
+        vscode.postMessage({
+            command: 'logout',
+            value: {
+                fileName: activeFile,
+                duration: elapsedSeconds,
+                auth
+            }
+        });
     };
 
     const handleSubmit = (fileName: string) => {
