@@ -1,0 +1,18 @@
+{
+    "lang": "java",
+    "level": "easy",
+    "testcases": [
+        {
+            "input": "hello\n",
+            "output": "olleh"
+        },
+        {
+            "input": "world\n",
+            "output": "dlrow"
+        },
+        {
+            "input": "a\n",
+            "output": "a"
+        }
+    ]
+}

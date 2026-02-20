@@ -1,0 +1,18 @@
+{
+    "lang": "java",
+    "level": "easy",
+    "testcases": [
+        {
+            "input": "4 3 1 7 2\n",
+            "output": "7"
+        },
+        {
+            "input": "3 -1 -5 -2\n",
+            "output": "-1"
+        },
+        {
+            "input": "1 10\n",
+            "output": "10"
+        }
+    ]
+}
