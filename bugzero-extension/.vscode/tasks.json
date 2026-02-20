@@ -6,7 +6,14 @@
 		{
 			"type": "npm",
 			"script": "watch",
-			"problemMatcher": "$ts-webpack-watch",
+			"problemMatcher": {
+				"base": "$ts-webpack-watch",
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "^\\[0\\]|^\\[1\\]",
+					"endsPattern": "webpack .* compiled successfully|Vite build finished"
+				}
+			},
 			"isBackground": true,
 			"presentation": {
 				"reveal": "never",

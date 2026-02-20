@@ -4,3 +4,6 @@ dist
 .env
 
 /generated/prisma
+
+/problems/*.py
+/problems/*.c

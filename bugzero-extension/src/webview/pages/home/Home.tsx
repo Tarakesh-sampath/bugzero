@@ -89,7 +89,7 @@ const Home = () => {
         };
 
         window.addEventListener('message', handler);
-        
+
         // Check for persisted login state on mount
         vscode.postMessage({ command: 'checkLogin' });
 
@@ -122,9 +122,9 @@ const Home = () => {
 
     const handleRun = (fileName: string, input: string, output: string) => {
         setRunResults(prev => ({ ...prev, [output]: { loading: true } }));
-        vscode.postMessage({ 
-            command: 'run', 
-            value: { fileName, input, expectedOutput: output } 
+        vscode.postMessage({
+            command: 'run',
+            value: { fileName, input, expectedOutput: output }
         });
     };
 
@@ -140,27 +140,27 @@ const Home = () => {
             <div style={{ padding: '20px' }}>
                 <h2>Login to BugZero</h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <input 
-                        type="text" 
-                        placeholder="Username" 
-                        value={username} 
+                    <input
+                        type="text"
+                        placeholder="Username"
+                        value={username}
                         disabled={isLoggingIn}
                         onChange={e => setUsername(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleLogin()}
                         style={{ padding: '5px', background: 'var(--vscode-input-background)', color: 'var(--vscode-input-foreground)', border: '1px solid var(--vscode-input-border)' }}
                     />
-                    <input 
-                        type="password" 
-                        placeholder="Password" 
-                        value={password} 
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
                         disabled={isLoggingIn}
                         onChange={e => setPassword(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleLogin()}
                         style={{ padding: '5px', background: 'var(--vscode-input-background)', color: 'var(--vscode-input-foreground)', border: '1px solid var(--vscode-input-border)' }}
                     />
-                    <Button 
-                        label={isLoggingIn ? "Logging in..." : "Login"} 
-                        onClick={handleLogin} 
+                    <Button
+                        label={isLoggingIn ? "Logging in..." : "Login"}
+                        onClick={handleLogin}
                         disabled={isLoggingIn}
                     />
                     {error && <p style={{ color: 'var(--vscode-errorForeground)' }}>{error}</p>}
@@ -215,7 +215,7 @@ const Home = () => {
                             const isSubmitted = submittedFiles.has(problemId);
                             const isActive = activeFile === file.name;
                             const problemInfo = problemsData.find(p => p.id === problemId);
-                            
+
                             return (
                                 <tr key={file.name} style={{ borderBottom: '1px solid var(--vscode-panel-border)', background: isActive ? 'var(--vscode-list-activeSelectionBackground)' : 'transparent' }}>
                                     <td style={{ padding: '5px', fontSize: '1.2em' }}>
@@ -223,7 +223,7 @@ const Home = () => {
                                     </td>
                                     <td style={{ padding: '5px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                            <span 
+                                            <span
                                                 onClick={() => handleOpenFile(file.name)}
                                                 style={{ cursor: 'pointer', color: isActive ? 'var(--vscode-list-activeSelectionForeground)' : 'var(--vscode-textLink-foreground)' }}
                                                 title="Click to open file"
@@ -234,9 +234,9 @@ const Home = () => {
                                         </div>
                                     </td>
                                     <td style={{ padding: '5px' }}>
-                                        <ActionButton 
-                                            isSubmitted={isSubmitted} 
-                                            onClick={() => handleSubmit(file.name)} 
+                                        <ActionButton
+                                            isSubmitted={isSubmitted}
+                                            onClick={() => handleSubmit(file.name)}
                                         />
                                     </td>
                                 </tr>
@@ -251,16 +251,16 @@ const Home = () => {
             <div style={{ flex: '1 1 50%', overflowY: 'auto', background: 'var(--vscode-sideBar-background)' }}>
                 {activeProblem ? (
                     <div>
-                        <div style={{ 
-                            padding: '12px 10px', 
+                        <div style={{
+                            padding: '12px 10px',
                             borderBottom: '1px solid var(--vscode-panel-border)',
                             background: 'var(--vscode-sideBar-sectionHeader-background)',
                             position: 'sticky',
                             top: 0,
                             zIndex: 10,
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'center' 
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
                         }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -269,9 +269,9 @@ const Home = () => {
                                 </div>
                                 <div style={{ fontSize: '1.1em', fontWeight: '500' }}>{formatName(activeProblem.id)}</div>
                             </div>
-                            <button 
+                            <button
                                 onClick={() => handleRunAll(activeProblem)}
-                                style={{ 
+                                style={{
                                     background: 'var(--vscode-button-background)',
                                     color: 'var(--vscode-button-foreground)',
                                     border: 'none',
@@ -294,10 +294,10 @@ const Home = () => {
                                     <div key={index} style={{ marginBottom: '15px', padding: '10px', background: 'var(--vscode-editor-background)', border: '1px solid var(--vscode-panel-border)', borderRadius: '4px' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                                             <strong style={{ fontSize: '0.9em', opacity: 0.9 }}>Case {index + 1}</strong>
-                                            <button 
+                                            <button
                                                 onClick={() => handleRun(`${activeProblem.id}.${activeProblem.lang}`, tc.input, tc.output)}
                                                 disabled={result?.loading}
-                                                style={{ 
+                                                style={{
                                                     background: 'var(--vscode-button-secondaryBackground)',
                                                     color: 'var(--vscode-button-secondaryForeground)',
                                                     border: '1px solid var(--vscode-button-border)',
@@ -320,8 +320,8 @@ const Home = () => {
                                         </div>
                                         {result && !result.loading && (
                                             <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px dashed var(--vscode-panel-border)' }}>
-                                                <div style={{ 
-                                                    color: result.success ? 'var(--vscode-testing-iconPassed)' : 'var(--vscode-errorForeground)', 
+                                                <div style={{
+                                                    color: result.success ? 'var(--vscode-testing-iconPassed)' : 'var(--vscode-errorForeground)',
                                                     fontWeight: 'bold',
                                                     fontSize: '0.9em',
                                                     display: 'flex',
@@ -333,9 +333,9 @@ const Home = () => {
                                                 {!result.success && (
                                                     <div style={{ fontSize: '0.85em', marginTop: '5px' }}>
                                                         {result.stderr ? (
-                                                            <pre style={{ 
-                                                                color: 'var(--vscode-errorForeground)', 
-                                                                whiteSpace: 'pre-wrap', 
+                                                            <pre style={{
+                                                                color: 'var(--vscode-errorForeground)',
+                                                                whiteSpace: 'pre-wrap',
                                                                 margin: '4px 0 0 0',
                                                                 padding: '6px',
                                                                 background: 'rgba(255,0,0,0.05)',
@@ -390,11 +390,11 @@ const ActionButton = ({ isSubmitted, onClick }: { isSubmitted: boolean, onClick:
 
     if (isSubmitted && !isHovered) {
         return (
-            <div 
+            <div
                 onMouseEnter={() => setIsHovered(true)}
-                style={{ 
-                    display: 'flex', 
-                    justifyContent: 'center', 
+                style={{
+                    display: 'flex',
+                    justifyContent: 'center',
                     alignItems: 'center',
                     padding: '2px 8px',
                     color: 'var(--vscode-testing-iconPassed)',
@@ -407,11 +407,11 @@ const ActionButton = ({ isSubmitted, onClick }: { isSubmitted: boolean, onClick:
     }
 
     return (
-        <button 
+        <button
             onClick={onClick}
             onMouseLeave={() => setIsHovered(false)}
-            style={{ 
-                background: 'var(--vscode-button-secondaryBackground)', 
+            style={{
+                background: 'var(--vscode-button-secondaryBackground)',
                 color: 'var(--vscode-button-secondaryForeground)',
                 border: 'none',
                 padding: '2px 8px',
