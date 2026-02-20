@@ -1,4 +1,4 @@
-# BugZero Server
+# It Takes Two Server
 
 Node.js Express project with TypeScript and Prisma (PostgreSQL).
 

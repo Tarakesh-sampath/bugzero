@@ -585,10 +585,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https:; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'nonce-${nonce}' 'unsafe-eval';">
-    <title>BugZero Sidebar</title>
+    <title>It Takes Two Sidebar</title>
 </head>
 <body>
-    <div id="root">Loading BugZero (React)...</div>
+    <div id="root">Loading Ozmenta '26 (It Takes Two)...</div>
     <script nonce="${nonce}" type="module" src="${scriptUri}"></script>
 </body>
 </html>`;

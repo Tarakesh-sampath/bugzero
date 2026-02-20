@@ -27,7 +27,7 @@ app.use(express.json());
 
 // Routes
 app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to BugZero Server API' });
+  res.json({ message: 'Welcome to It Takes Two - Ozmenta \'26 API' });
 });
 
 app.use('/', userRoutes);

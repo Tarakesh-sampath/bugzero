@@ -56,7 +56,7 @@ router.get("/dashboard", adminAuth, async (req, res: Response) => {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <meta http-equiv="refresh" content="60">
-          <title>BugZero Admin Dashboard</title>
+          <title>Ozmenta '26 - It Takes Two Admin</title>
           <style>
               body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background: #f4f7f6; }
               .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; max-width: 1200px; margin-left: auto; margin-right: auto; }
@@ -82,7 +82,7 @@ router.get("/dashboard", adminAuth, async (req, res: Response) => {
       </head>
       <body>
           <div class="header">
-              <h1>BugZero Admin Dashboard</h1>
+              <h1>Ozmenta '26 - It Takes Two Admin Dashboard</h1>
               <p class="refresh-hint">Auto-refreshing every 1m...</p>
           </div>
           
@@ -108,17 +108,17 @@ router.get("/dashboard", adminAuth, async (req, res: Response) => {
                   </thead>
                   <tbody>
                       ${users.map(user => {
-                        const userSubmissions = new Set(user.submissions.map(s => s.problemId));
-                        return `
+      const userSubmissions = new Set(user.submissions.map(s => s.problemId));
+      return `
                           <tr>
                               <td>${user.username}</td>
                               ${problems.map(p => {
-                                const submitted = userSubmissions.has(p.id);
-                                return `<td>${submitted ? '<span class="check">✓</span>' : '<span class="empty">-</span>'}</td>`;
-                              }).join('')}
+        const submitted = userSubmissions.has(p.id);
+        return `<td>${submitted ? '<span class="check">✓</span>' : '<span class="empty">-</span>'}</td>`;
+      }).join('')}
                           </tr>
                         `;
-                      }).join('')}
+    }).join('')}
                   </tbody>
               </table>
           </div>

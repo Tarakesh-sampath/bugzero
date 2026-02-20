@@ -1,3 +1,3 @@
-# BugZero
+# It Takes Two
 
-An extension for BugZero event of Zensyra'26
+An extension for It Takes Two event of Ozmenta '26

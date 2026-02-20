@@ -1,9 +1,9 @@
 {
   "name": "bugzero-extension",
-  "displayName": "bugzero-extension",
-  "description": "",
+  "displayName": "It Takes Two",
+  "description": "Programming event extension for Ozmenta '26",
   "version": "0.0.1",
-  "publisher": "bugzero",
+  "publisher": "it-takes-two",
   "engines": {
     "vscode": "^1.109.0"
   },
@@ -19,7 +19,7 @@
       "activitybar": [
         {
           "id": "bugzero-sidebar-view",
-          "title": "BugZero",
+          "title": "It Takes Two",
           "icon": "media/icon.svg"
         }
       ]
@@ -29,7 +29,7 @@
         {
           "type": "webview",
           "id": "bugzero-sidebar",
-          "name": "BugZero Problems",
+          "name": "Ozmenta '26 Problems",
           "visibility": "visible"
         }
       ]
@@ -41,21 +41,21 @@
       },
       {
         "command": "bugzero-sidebar.focus",
-        "title": "Focus BugZero Sidebar"
+        "title": "Focus It Takes Two Sidebar"
       },
       {
         "command": "bugzero-extension.pullProblems",
-        "title": "BugZero: Pull Missing Problems",
+        "title": "It Takes Two: Pull Problems",
         "icon": "$(cloud-download)"
       },
       {
         "command": "bugzero-extension.refreshFiles",
-        "title": "BugZero: Refresh Files",
+        "title": "It Takes Two: Refresh Files",
         "icon": "$(refresh)"
       },
       {
         "command": "bugzero-extension.logout",
-        "title": "BugZero: Logout",
+        "title": "It Takes Two: Logout",
         "icon": "$(sign-out)"
       }
     ]

@@ -5,7 +5,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
-    res.setHeader('WWW-Authenticate', 'Basic realm="BugZero"');
+    res.setHeader('WWW-Authenticate', 'Basic realm="It Takes Two"');
     return res.status(401).json({ error: 'Authentication required' });
   }
 

@@ -190,7 +190,7 @@ const Home = () => {
     if (!isLoggedIn) {
         return (
             <div style={{ padding: '20px' }}>
-                <h2>Login to BugZero</h2>
+                <h2>Login to Ozmenta '26</h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <input
                         type="text"
@@ -256,7 +256,7 @@ const Home = () => {
             <div style={{ flex: '1 1 50%', overflowY: 'auto', padding: '10px', borderBottom: '1px solid var(--vscode-panel-border)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', marginBottom: '10px' }}>
                     <div>
-                        <h2 style={{ margin: 0 }}>Problems</h2>
+                        <h2 style={{ margin: 0 }}>Ozmenta '26 Problems</h2>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span style={{ fontSize: '0.8em', opacity: 0.8 }}>Hi, {username}</span>
                             <span style={{ fontSize: '0.9em', fontWeight: 'bold', color: 'var(--vscode-charts-blue)' }}>{formatTime(elapsedSeconds)}</span>
