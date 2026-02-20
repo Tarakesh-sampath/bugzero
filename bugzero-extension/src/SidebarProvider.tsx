@@ -49,14 +49,17 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           const savedAuth = this._context.globalState.get<{
             auth: string;
             username: string;
+            seed?: string;
           }>("loginData");
           if (savedAuth) {
             try {
               const response = await fetch(`${this._baseUrl}/register`, {
                 method: "POST",
                 headers: {
+                  "Content-Type": "application/json",
                   Authorization: `Basic ${savedAuth.auth}`,
                 },
+                body: JSON.stringify({ seed: savedAuth.seed }),
               });
 
               if (response.ok) {
@@ -98,7 +101,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           break;
         }
         case "getFiles": {
-          await this.pullProblems(false);
+          await this.refreshFiles();
           break;
         }
         case "login": {
@@ -120,10 +123,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
               const result: any = await response.json();
               const problems = result.problems || [];
 
-              // Persist login
               await this._context.globalState.update("loginData", {
                 auth,
                 username,
+                seed: data.value.seed,
               });
 
               // Clean up old files before syncing new ones
@@ -141,8 +144,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 problems: problems, // Send problems to webview for testcases
               });
 
-              // Also refresh file list
-              await this.pullProblems(false, data.value.seed);
+              // Also refresh file list locally
+              await this.refreshFiles();
             } else {
               const errorData = await response.json().catch(() => ({}));
               this._view?.webview.postMessage({
@@ -376,6 +379,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     const savedAuth = this._context.globalState.get<{
       auth: string;
       username: string;
+      seed?: string;
     }>("loginData");
 
     // Always get local files
@@ -408,8 +412,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     }
 
     try {
-      const url = seed
-        ? `${this._baseUrl}/problems?seed=${encodeURIComponent(seed)}`
+      const effectiveSeed = seed || savedAuth.seed;
+      const url = effectiveSeed
+        ? `${this._baseUrl}/problems?seed=${encodeURIComponent(effectiveSeed)}`
         : `${this._baseUrl}/problems`;
 
       const response = await fetch(url, {
@@ -420,6 +425,12 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
       if (response.ok) {
         const problems: any = await response.json();
+
+        // If a seed is used, clear out old problems before syncing the new random choice
+        if (effectiveSeed) {
+          await this.cleanupProblems();
+        }
+
         const syncedCount = await this.syncProblems(problems);
 
         if (showMessages && syncedCount > 0) {
@@ -445,6 +456,26 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         vscode.window.showErrorMessage("Server connection failed during pull.");
       const files = await getLocalFiles();
       this._view?.webview.postMessage({ command: "files", value: files });
+    }
+  }
+
+  public async refreshFiles() {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) {
+      this._view?.webview.postMessage({ command: "files", value: [] });
+      return;
+    }
+
+    const rootUri = workspaceFolders[0].uri;
+    try {
+      const entries = await vscode.workspace.fs.readDirectory(rootUri);
+      const files = entries.map(([name, type]) => ({
+        name,
+        type: type === vscode.FileType.Directory ? "directory" : "file",
+      }));
+      this._view?.webview.postMessage({ command: "files", value: files });
+    } catch (err) {
+      console.error("Refresh files error:", err);
     }
   }
 
