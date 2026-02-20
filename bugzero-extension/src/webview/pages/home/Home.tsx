@@ -27,6 +27,8 @@ const Home = () => {
     const [runResults, setRunResults] = useState<Record<string, any>>({});
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [seed, setSeed] = useState('');
+    const [loginTime, setLoginTime] = useState<number | null>(null);
+    const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
     // @ts-ignore
     const vscode = React.useMemo(() => acquireVsCodeApi(), []);
@@ -44,6 +46,8 @@ const Home = () => {
                         setIsLoggedIn(true);
                         setAuth(message.auth);
                         setUsername(message.username);
+                        setLoginTime(Date.now());
+                        setElapsedSeconds(0);
                         if (message.user && message.user.submissions) {
                             const submitted = new Set<string>(
                                 message.user.submissions.map((s: any) => s.problemId)
@@ -65,6 +69,8 @@ const Home = () => {
                     setPassword('');
                     setSubmittedFiles(new Set());
                     setProblemsData([]);
+                    setLoginTime(null);
+                    setElapsedSeconds(0);
                     break;
                 case 'submissionResponse':
                     if (message.success) {
@@ -97,6 +103,26 @@ const Home = () => {
         return () => window.removeEventListener('message', handler);
     }, [vscode]);
 
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isLoggedIn && loginTime) {
+            interval = setInterval(() => {
+                setElapsedSeconds(Math.floor((Date.now() - loginTime) / 1000));
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [isLoggedIn, loginTime]);
+
+    const formatTime = (seconds: number) => {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        return [h, m, s]
+            .map(v => v < 10 ? "0" + v : v)
+            .filter((v, i) => v !== "00" || i > 0)
+            .join(":");
+    };
+
     const handleLogin = () => {
         if (!username || !password) {
             setError('Please enter both username and password.');
@@ -114,7 +140,7 @@ const Home = () => {
 
     const handleSubmit = (fileName: string) => {
         console.log("Submitting file in webview:", fileName);
-        vscode.postMessage({ command: 'submit', value: { fileName, auth } });
+        vscode.postMessage({ command: 'submit', value: { fileName, auth, duration: elapsedSeconds } });
     };
 
     const handleOpenFile = (fileName: string) => {
@@ -206,7 +232,10 @@ const Home = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', marginBottom: '10px' }}>
                     <div>
                         <h2 style={{ margin: 0 }}>Problems</h2>
-                        <span style={{ fontSize: '0.8em', opacity: 0.8 }}>Hi, {username}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '0.8em', opacity: 0.8 }}>Hi, {username}</span>
+                            <span style={{ fontSize: '0.9em', fontWeight: 'bold', color: 'var(--vscode-charts-blue)' }}>{formatTime(elapsedSeconds)}</span>
+                        </div>
                     </div>
                     <button
                         onClick={handleLogout}
@@ -218,6 +247,21 @@ const Home = () => {
                             borderRadius: '2px',
                             cursor: 'pointer',
                             fontSize: '0.8em'
+                        }}
+                    >
+                        End
+                    </button>
+                    <button
+                        onClick={handleLogout}
+                        style={{
+                            background: 'var(--vscode-button-secondaryBackground)',
+                            color: 'var(--vscode-button-secondaryForeground)',
+                            border: '1px solid var(--vscode-button-border)',
+                            padding: '4px 8px',
+                            borderRadius: '2px',
+                            cursor: 'pointer',
+                            fontSize: '0.8em',
+                            display: 'none' // Keep original logout hidden if needed, or just replace it
                         }}
                     >
                         Logout

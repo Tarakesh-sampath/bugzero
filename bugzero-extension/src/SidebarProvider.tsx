@@ -304,7 +304,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           break;
         }
         case "submit": {
-          const { fileName, auth } = data.value;
+          const { fileName, auth, duration } = data.value;
           const workspaceFolders = vscode.workspace.workspaceFolders;
           if (!workspaceFolders) {
             return;
@@ -327,6 +327,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
               body: JSON.stringify({
                 problemId: fileName.split(".")[0],
                 solution: content,
+                duration,
               }),
             });
 
