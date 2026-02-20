@@ -128,6 +128,14 @@ const Home = () => {
             setError('Please enter both username and password.');
             return;
         }
+
+        // Validate seed: [1-3][jcp]
+        const seedRegex = /^[1-3][jcp]$/i;
+        if (!seed || !seedRegex.test(seed)) {
+            setError('Please enter a valid seed (e.g., 1j, 2c, 3p).');
+            return;
+        }
+
         console.log("Attempting login in webview for:", username, "with seed:", seed);
         setError('');
         setIsLoggingIn(true);
